@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>हिमालयन प्रहरी - कार्बन क्रेडिट</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { 
+            max-width: 500px; 
+            margin: 20px auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 30px;
+            color: #2e7d32;
+        }
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 15px;
+            display: block;
+            border-radius: 15px;
+            object-fit: contain;
+            border: 3px solid #2e7d32;
+            box-shadow: 0 4px 15px rgba(46, 125, 50, 0.2);
+            background: white;
+            padding: 5px;
+        }
+        .header h1 { 
+            font-size: 28px; 
+            margin-bottom: 8px;
+            color: #2e7d32;
+        }
+        .header p {
+            color: #388e3c;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+        .form-group { margin-bottom: 20px; }
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600;
+            color: #388e3c;
+        }
+        .required::after { content: " *"; color: red; }
+        input, select { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #c8e6c9; 
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2e7d32;
+        }
+        button { 
+            background: linear-gradient(135deg, #2e7d32, #388e3c);
+            color: white; 
+            padding: 15px; 
+            width: 100%; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+        button:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 20px rgba(46, 125, 50, 0.3);
+        }
+        button:disabled { 
+            background: #cccccc; 
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .result { 
+            background: #e8f5e8; 
+            padding: 20px; 
+            margin-top: 25px; 
+            border-radius: 10px;
+            border-left: 5px solid #2e7d32;
+            display: none;
+        }
+        .carbon-badge {
+            background: linear-gradient(135deg, #2e7d32, #388e3c);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 15px 0;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
+        }
+        .loading { 
+            text-align: center; 
+            color: #2e7d32; 
+            display: none;
+            padding: 20px;
+        }
+        .success { color: #2e7d32; }
+        .error { color: #d32f2f; }
+        .unit { color: #666; font-size: 14px; margin-left: 5px; }
+        
+        /* Form sections styling */
+        .form-section {
+            background: #f8fffd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2e7d32;
+        }
+        .form-section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2e7d32;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+                margin: 10px auto;
+            }
+            .logo {
+                width: 100px;
+                height: 100px;
+            }
+            .header h1 {
+                font-size: 24px;
+            }
+            .header p {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <!-- New Modern Logo -->
+            <img src="https://i.postimg.cc/PxNJMGTM/Modern-Sustainable-Farming-Logo-CHANGE.png" alt="हिमालयन प्रहरी - आधुनिक टिकाऊ खेती लोगो" class="logo">
+            <h1>हिमालयन प्रहरी</h1>
+            <p>पहाड़ी किसानों के लिए कार्बन क्रेडिट प्लेटफॉर्म</p>
+        </div>
+
+        <form id="farmerForm">
+            <!-- किसान की जानकारी -->
+            <div class="form-section">
+                <div class="form-section-title">👨‍🌾 किसान की जानकारी</div>
+                
+                <div class="form-group">
+                    <label class="required">पूरा नाम</label>
+                    <input type="text" id="name" placeholder="जैसे: रमेश सिंह नेगी" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="required">मोबाइल नंबर</label>
+                    <input type="tel" id="mobile" placeholder="10 अंकों का मोबाइल नंबर" pattern="[0-9]{10}" required>
+                </div>
+            </div>
+
+            <!-- स्थान की जानकारी -->
+            <div class="form-section">
+                <div class="form-section-title">📍 स्थान की जानकारी</div>
+
+                <div class="form-group">
+                    <label class="required">गाँव/बस्ती का नाम</label>
+                    <input type="text" id="village" placeholder="जैसे: तिलवाड़ा, जखोली, पोखरी" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="required">तहसील/ब्लॉक</label>
+                    <input type="text" id="tehsil" placeholder="जैसे: उखीमठ, जखोली, कर्णप्रयाग" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="required">जिला</label>
+                    <select id="district" required>
+                        <option value="">जिला चुनें...</option>
+                        <option value="almora">अल्मोड़ा</option>
+                        <option value="bageshwar">बागेश्वर</option>
+                        <option value="chamoli">चमोली</option>
+                        <option value="champawat">चंपावत</option>
+                        <option value="dehradun">देहरादून</option>
+                        <option value="haridwar">हरिद्वार</option>
+                        <option value="nainital">नैनीताल</option>
+                        <option value="pauri">पौड़ी गढ़वाल</option>
+                        <option value="pithoragarh">पिथौरागढ़</option>
+                        <option value="rudraprayag">रुद्रप्रयाग</option>
+                        <option value="tehri">टिहरी गढ़वाल</option>
+                        <option value="udham singh nagar">उधम सिंह नगर</option>
+                        <option value="uttarkashi">उत्तरकाशी</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- भूमि का विवरण -->
+            <div class="form-section">
+                <div class="form-section-title">🌾 भूमि का विवरण</div>
+
+                <div class="form-group">
+                    <label class="required">जमीन का आकार</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="landSize" placeholder="संख्या" step="0.01" min="0" required style="flex: 2;">
+                        <select id="landUnit" required style="flex: 1;">
+                            <option value="hectare">हेक्टेयर</option>
+                            <option value="nali">नाली</option>
+                            <option value="bigha">बीघा</option>
+                            <option value="acre">एकड़</option>
+                        </select>
+                    </div>
+                    <small style="color: #666; margin-top: 5px; display: block;">
+                        💡 1 हेक्टेयर = 20 नाली = 4 बीघा (उत्तराखंड)
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label class="required">जमीन का प्रकार</label>
+                    <select id="landType" required>
+                        <option value="">चुनें...</option>
+                        <option value="naali">नाली भूमि (सिंचित)</option>
+                        <option value="pahadi_khet">पहाड़ी खेत (ढलान)</option>
+                        <option value="bagwan">बागवानी भूमि</option>
+                        <option value="van">वन भूमि</option>
+                        <option value="charagah">चरागाह</option>
+                        <option value="banjar">बंजर भूमि</option>
+                        <option value="mixed">मिश्रित भूमि</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>ऊँचाई (वैकल्पिक)</label>
+                    <input type="number" id="altitude" placeholder="मीटर में, जैसे: 1500" min="0">
+                    <small style="color: #666;">समुद्र तल से ऊँचाई</small>
+                </div>
+            </div>
+
+            <!-- पेड़ों की जानकारी -->
+            <div class="form-section">
+                <div class="form-section-title">🌳 पेड़ों की जानकारी</div>
+
+                <div class="form-group">
+                    <label class="required">कुल पेड़ों की संख्या</label>
+                    <input type="number" id="treeCount" placeholder="कुल पेड़ों की संख्या" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label>मुख्य पेड़ प्रजातियाँ</label>
+                    <select id="treeSpecies" multiple style="height: 100px;">
+                        <option value="apple">सेब</option>
+                        <option value="peach">आड़ू</option>
+                        <option value="apricot">खुबानी</option>
+                        <option value="walnut">अखरोट</option>
+                        <option value="bamboo">बांस</option>
+                        <option value="oak">ओक (बाँज)</option>
+                        <option value="rhododendron">बुरांश</option>
+                        <option value="deodar">देवदार</option>
+                        <option value="pine">चीड़</option>
+                        <option value="maple">मेपल</option>
+                    </select>
+                    <small style="color: #666;">Ctrl+Click से एक से ज्यादा select करें</small>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn">📝 रजिस्टर करें और कार्बन स्कोर देखें</button>
+        </form>
+
+        <div class="loading" id="loading">
+            <p>⏳ आपकी जानकारी प्रोसेस हो रही है...</p>
+            <p>कृपया प्रतीक्षा करें</p>
+        </div>
+
+        <div class="result" id="result">
+            <h3 class="success">✅ रजिस्ट्रेशन सफल!</h3>
+            <p><strong>किसान आईडी:</strong> <span id="farmerId">HP2024-</span><span id="farmerIdNum"></span></p>
+            <p><strong>नाम:</strong> <span id="resultName"></span></p>
+            <p><strong>गाँव:</strong> <span id="resultVillage"></span>, <span id="resultDistrict"></span></p>
+            <p><strong>जमीन:</strong> <span id="resultLandSize"></span> <span id="resultLandUnit"></span> (<span id="resultLandType"></span>)</p>
+            
+            <div class="carbon-badge">
+                🌱 आपका कार्बन स्कोर: <span id="carbonScore">0</span> टन CO₂/वर्ष
+            </div>
+            
+            <p><strong>💰 अनुमानित वार्षिक आय:</strong> ₹<span id="estimatedIncome">0</span></p>
+            
+            <p style="margin-top: 15px; font-size: 14px; color: #666;">
+                <small>📞 हिमालयन प्रहरी टीम जल्द ही आपसे संपर्क करेगी।</small><br>
+                <small>📧 आपकी जानकारी सुरक्षित रखी जाएगी।</small>
+            </p>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #555; line-height: 1.5; padding-bottom: 20px;">
+        <strong style="color: #2e7d32;">CHANGE TechLab</strong><br>
+        Rural Intelligence + GIS + Business Planning Company<br>
+        <span style="font-style: italic;">From Rural Data to Business Decisions</span><br>
+        <div style="margin: 8px auto; height: 1px; background: #c8e6c9; width: 60%;"></div>
+        © 2026 CHANGE TechLab. All Rights Reserved.<br>
+        <a href="#" style="color: #388e3c; text-decoration: none;">Privacy Policy</a> | <a href="#" style="color: #388e3c; text-decoration: none;">Terms of Service</a><br>
+        <a href="mailto:changetechlab@outlook.com" style="color: #666; text-decoration: none;">changetechlab@outlook.com</a>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000';
+        
+        // Unit conversion factors
+        const unitConversion = {
+            'hectare': 1,
+            'nali': 0.05,    // 1 nali = 0.05 hectare
+            'bigha': 0.25,   // 1 bigha = 0.25 hectare  
+            'acre': 0.4      // 1 acre = 0.4 hectare
+        };
+
+        // Carbon factors for different land types
+        const landTypeFactors = {
+            'naali': 1.2,        // Irrigated land - higher carbon
+            'pahadi_khet': 0.8,  // Sloping land - medium carbon
+            'bagwan': 1.5,       // Orchards - highest carbon
+            'van': 1.8,          // Forest land - very high carbon
+            'charagah': 0.6,     // Pasture - medium carbon
+            'banjar': 0.3,       // Barren land - low carbon
+            'mixed': 1.0         // Mixed - average
+        };
+        
+        document.getElementById('farmerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            
+            // Show loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'प्रोसेस हो रहा है...';
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            
+            // Get form data
+            const landSize = parseFloat(document.getElementById('landSize').value);
+            const landUnit = document.getElementById('landUnit').value;
+            const landType = document.getElementById('landType').value;
+            
+            // Convert to hectares for calculation
+            const landSizeHectares = landSize * unitConversion[landUnit];
+            
+            const formData = {
+                name: document.getElementById('name').value,
+                mobile: document.getElementById('mobile').value,
+                village: document.getElementById('village').value,
+                tehsil: document.getElementById('tehsil').value,
+                district: document.getElementById('district').value,
+                landSize: landSizeHectares,
+                landUnit: landUnit,
+                landType: landType,
+                altitude: document.getElementById('altitude').value || null,
+                treeCount: parseInt(document.getElementById('treeCount').value),
+                treeSpecies: Array.from(document.getElementById('treeSpecies').selectedOptions).map(opt => opt.value)
+            };
+            
+            try {
+                // Generate farmer ID
+                const farmerIdNum = Math.floor(1000 + Math.random() * 9000);
+                document.getElementById('farmerIdNum').textContent = farmerIdNum;
+                
+                // Himalayan specific carbon calculation
+                const treeCarbon = formData.treeCount * 25.6 / 1000; // tonnes (higher for Himalayan trees)
+                const landFactor = landTypeFactors[formData.landType] || 1.0;
+                const soilCarbon = formData.landSize * 0.4 * landFactor; // tonnes
+                const totalCarbon = (treeCarbon + soilCarbon).toFixed(2);
+                
+                // Higher income for Himalayan projects (premium)
+                const estimatedIncome = (totalCarbon * 850).toFixed(2);
+                
+                // Show results
+                document.getElementById('resultName').textContent = formData.name;
+                document.getElementById('resultVillage').textContent = formData.village;
+                document.getElementById('resultDistrict').textContent = document.getElementById('district').options[document.getElementById('district').selectedIndex].text;
+                document.getElementById('resultLandSize').textContent = landSize;
+                document.getElementById('resultLandUnit').textContent = document.getElementById('landUnit').options[document.getElementById('landUnit').selectedIndex].text;
+                document.getElementById('resultLandType').textContent = document.getElementById('landType').options[document.getElementById('landType').selectedIndex].text;
+                document.getElementById('carbonScore').textContent = totalCarbon;
+                document.getElementById('estimatedIncome').textContent = estimatedIncome;
+                
+                // Simulate API call success
+                setTimeout(() => {
+                    loading.style.display = 'none';
+                    result.style.display = 'block';
+                    result.scrollIntoView({ behavior: 'smooth' });
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('नेटवर्क त्रुटि: सर्वर से कनेक्ट नहीं हो पा रहा');
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.textContent = '📝 रजिस्टर करें और कार्बन स्कोर देखें';
+            }
+        });
+
+        // Real-time carbon calculation preview
+        function updateCarbonPreview() {
+            const treeCount = parseInt(document.getElementById('treeCount').value) || 0;
+            const landSize = parseFloat(document.getElementById('landSize').value) || 0;
+            const landUnit = document.getElementById('landUnit').value;
+            const landType = document.getElementById('landType').value;
+            
+            if ((treeCount > 0 || landSize > 0) && landType) {
+                const landSizeHectares = landSize * unitConversion[landUnit];
+                const landFactor = landTypeFactors[landType] || 1.0;
+                
+                const treeCarbon = treeCount * 25.6 / 1000;
+                const soilCarbon = landSizeHectares * 0.4 * landFactor;
+                const totalCarbon = (treeCarbon + soilCarbon).toFixed(2);
+                
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.textContent = `📝 रजिस्टर करें (अनुमानित: ${totalCarbon} टन CO₂/वर्ष)`;
+            } else {
+                document.getElementById('submitBtn').textContent = '📝 रजिस्टर करें और कार्बन स्कोर देखें';
+            }
+        }
+
+        // Add event listeners for real-time updates
+        document.getElementById('treeCount').addEventListener('input', updateCarbonPreview);
+        document.getElementById('landSize').addEventListener('input', updateCarbonPreview);
+        document.getElementById('landUnit').addEventListener('change', updateCarbonPreview);
+        document.getElementById('landType').addEventListener('change', updateCarbonPreview);
+    </script>
+</body>
+</html>

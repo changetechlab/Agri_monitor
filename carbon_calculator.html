@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carbon Credit Calculator — CHANGE TechLab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f0;color:#1a2e1a;min-height:100vh}
+.header{background:linear-gradient(135deg,#1a5c2a,#2d8a45);color:#fff;padding:18px 24px;display:flex;align-items:center;gap:14px}
+.header-logo{width:48px;height:48px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.header-text h1{font-size:18px;font-weight:700}
+.header-text p{font-size:12px;opacity:0.85;margin-top:2px}
+.container{max-width:860px;margin:0 auto;padding:20px 16px}
+.card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.07);margin-bottom:16px;overflow:hidden}
+.card-header{background:#e8f5e9;padding:12px 18px;font-size:13px;font-weight:600;color:#1a5c2a;border-bottom:1px solid #c8e6c9}
+.card-body{padding:16px 18px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;font-weight:600;color:#2d5a3d}
+.field input,.field select{border:1.5px solid #c8e6c9;border-radius:7px;padding:9px 12px;font-size:14px;color:#1a2e1a;background:#fff;transition:border-color 0.2s}
+.field input:focus,.field select:focus{outline:none;border-color:#2d8a45}
+.field .hint{font-size:11px;color:#6a8c6a;margin-top:2px}
+
+/* Area converter box */
+.area-box{background:#f1f8f1;border:1.5px solid #a5d6a7;border-radius:10px;padding:14px;margin-bottom:14px}
+.area-box-title{font-size:12px;font-weight:700;color:#1a5c2a;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.area-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+@media(max-width:500px){.area-row{grid-template-columns:1fr 1fr}}
+.area-unit{display:flex;flex-direction:column;gap:3px}
+.area-unit label{font-size:11px;font-weight:600;color:#2d5a3d}
+.area-unit input{border:1.5px solid #c8e6c9;border-radius:7px;padding:8px 10px;font-size:14px;font-weight:600;color:#1a2e1a;background:#fff;width:100%}
+.area-unit input:focus{outline:none;border-color:#2d8a45}
+.area-unit .sub{font-size:10px;color:#6a8c6a}
+.conv-note{font-size:11px;color:#4a7a4a;background:#e8f5e9;border-radius:6px;padding:6px 10px;line-height:1.7}
+.active-unit{border-color:#2d8a45!important;background:#f1f8f1!important}
+
+.radio-group{display:flex;gap:10px;flex-wrap:wrap}
+.radio-opt{display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer}
+.radio-opt input{accent-color:#2d8a45;width:15px;height:15px}
+.calc-btn{width:100%;background:linear-gradient(135deg,#1a5c2a,#2d8a45);color:#fff;border:none;border-radius:9px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
+.calc-btn:hover{opacity:0.92}
+.result-section{display:none}
+.result-section.show{display:block}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:500px){.metrics{grid-template-columns:1fr 1fr}}
+.metric{background:#f1f8f1;border-radius:10px;padding:14px 12px;text-align:center;border:1px solid #c8e6c9}
+.metric .val{font-size:22px;font-weight:700;color:#1a5c2a}
+.metric .unit{font-size:11px;color:#5a7a5a;margin-top:2px}
+.metric .lbl{font-size:11px;color:#4a6a4a;margin-top:4px;font-weight:600}
+.breakdown{width:100%;border-collapse:collapse;font-size:13px}
+.breakdown th{background:#e8f5e9;padding:9px 12px;text-align:left;font-weight:600;color:#1a5c2a;border-bottom:2px solid #c8e6c9}
+.breakdown td{padding:8px 12px;border-bottom:1px solid #eef5ee}
+.breakdown tr:last-child td{border-bottom:none;font-weight:700;background:#f9fcf9}
+.bar-wrap{margin:14px 0 4px}
+.bar-label{font-size:12px;color:#2d5a3d;margin-bottom:4px;font-weight:600}
+.bar-track{background:#e8f5e9;border-radius:20px;height:20px;overflow:hidden}
+.bar-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#2d8a45,#52c46a);transition:width 0.8s ease;display:flex;align-items:center;padding-left:8px}
+.bar-fill span{font-size:11px;color:#fff;font-weight:600;white-space:nowrap}
+.action-btns{display:flex;gap:10px;margin-top:14px}
+.btn-print{flex:1;background:#fff;border:2px solid #2d8a45;color:#2d8a45;border-radius:9px;padding:11px;font-size:14px;font-weight:600;cursor:pointer}
+.btn-print:hover{background:#e8f5e9}
+.btn-new{flex:1;background:#2d8a45;border:none;color:#fff;border-radius:9px;padding:11px;font-size:14px;font-weight:600;cursor:pointer}
+.badge-org{display:inline-block;background:#fff3e0;color:#e65100;border-radius:20px;padding:2px 9px;font-size:11px;font-weight:600}
+.badge-good{background:#e8f5e9;color:#1a5c2a}
+.footer-note{font-size:11px;color:#6a8c6a;text-align:center;margin-top:8px;line-height:1.6}
+.area-display{font-size:12px;background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:6px 10px;margin-top:6px;color:#5a4a00;font-weight:600}
+
+@media print{
+  body{background:#fff}
+  .no-print{display:none!important}
+  .container{padding:0;max-width:100%}
+  .card{box-shadow:none;border:1px solid #ddd;margin-bottom:12px}
+  .result-section{display:block!important}
+  .print-header{display:block!important}
+  .action-btns{display:none}
+}
+.print-header{display:none;text-align:center;margin-bottom:16px}
+.print-header h2{font-size:18px;color:#1a5c2a}
+.print-header p{font-size:12px;color:#555;margin-top:4px}
+.print-divider{border:none;border-top:2px solid #2d8a45;margin:10px 0}
+</style>
+</head>
+<body>
+
+<div class="header no-print">
+  <div class="header-logo">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+      <circle cx="16" cy="16" r="14" fill="#e8f5e9"/>
+      <path d="M16 6 Q10 12 10 18 Q10 24 16 26 Q22 24 22 18 Q22 12 16 6Z" fill="#2d8a45"/>
+      <path d="M16 14 Q13 17 13 20 Q13 23 16 24 Q19 23 19 20 Q19 17 16 14Z" fill="#52c46a"/>
+      <line x1="16" y1="26" x2="16" y2="30" stroke="#1a5c2a" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="header-text">
+    <h1>🌱 Carbon Credit Calculator</h1>
+    <p>CHANGE TechLab — Rural Intelligence & GIS Solutions | Uttarakhand</p>
+  </div>
+</div>
+
+<div class="container">
+
+<div class="print-header">
+  <h2>🌱 Carbon Credit Report</h2>
+  <p>CHANGE TechLab — Rural Intelligence & GIS Solutions, Uttarakhand</p>
+  <hr class="print-divider">
+</div>
+
+<!-- FORM -->
+<div class="card no-print">
+  <div class="card-header">📋 Farmer / Farm Details भरें</div>
+  <div class="card-body">
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field">
+        <label>Farmer का नाम *</label>
+        <input type="text" id="f_name" placeholder="जैसे: Ram Singh Rawat">
+      </div>
+      <div class="field">
+        <label>Village / ग्राम</label>
+        <input type="text" id="f_village" placeholder="जैसे: Tilwara">
+      </div>
+      <div class="field">
+        <label>Block / विकास खंड</label>
+        <input type="text" id="f_block" placeholder="जैसे: Ukhimath">
+      </div>
+      <div class="field">
+        <label>District / जिला</label>
+        <input type="text" id="f_district" placeholder="जैसे: Rudraprayag">
+      </div>
+    </div>
+
+    <!-- AREA CONVERTER -->
+    <div class="area-box">
+      <div class="area-box-title">📐 खेत का रकबा — कोई भी एक unit में भरें, बाकी अपने आप convert होगा</div>
+      <div class="area-row">
+        <div class="area-unit">
+          <label>नाली (Nali)</label>
+          <input type="number" id="a_nali" placeholder="जैसे: 8" min="0" step="0.5" oninput="convertArea('nali')">
+          <span class="sub">पहाड़ी माप — सबसे आम</span>
+        </div>
+        <div class="area-unit">
+          <label>बीघा (Bigha)</label>
+          <input type="number" id="a_bigha" placeholder="जैसे: 2" min="0" step="0.5" oninput="convertArea('bigha')">
+          <span class="sub">1 बीघा = 5 नाली</span>
+        </div>
+        <div class="area-unit">
+          <label>एकड़ (Acre)</label>
+          <input type="number" id="a_acre" placeholder="जैसे: 0.5" min="0" step="0.1" oninput="convertArea('acre')">
+          <span class="sub">1 Acre = 10 नाली</span>
+        </div>
+        <div class="area-unit">
+          <label>हेक्टेयर (Hectare)</label>
+          <input type="number" id="a_hac" placeholder="जैसे: 0.2" min="0" step="0.05" oninput="convertArea('hac')">
+          <span class="sub">1 Ha = 24.7 नाली</span>
+        </div>
+        <div class="area-unit">
+          <label>मुट्ठी / मुठ (Muthi)</label>
+          <input type="number" id="a_muthi" placeholder="जैसे: 40" min="0" step="1" oninput="convertArea('muthi')">
+          <span class="sub">20 मुठ = 1 नाली</span>
+        </div>
+      </div>
+      <div class="conv-note">
+        📌 Uttarakhand माप: <b>1 नाली = 200 वर्ग मीटर</b> | 1 बीघा = 5 नाली = 1000 वर्ग मीटर<br>
+        1 Acre = 10 नाली = 0.405 हेक्टेयर | 1 Hectare = 24.71 नाली = 4.94 बीघा
+      </div>
+      <div class="area-display" id="area_summary" style="display:none"></div>
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label>खेत में पेड़ों की संख्या</label>
+        <input type="number" id="f_trees" placeholder="जैसे: 20" min="0" value="0">
+        <span class="hint">बांज, देवदार, फल के पेड़ सब count करें</span>
+      </div>
+      <div class="field">
+        <label>Crop Type / फसल</label>
+        <select id="f_crop">
+          <option value="wheat">Wheat / गेहूं</option>
+          <option value="millet">Millet / मंडुवा-झंगोरा</option>
+          <option value="vegetable">Vegetable / सब्जी</option>
+          <option value="fruit">Fruit / माल्टा-नाशपाती</option>
+          <option value="agroforestry">Agroforestry / मिश्रित बागवानी</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Irrigation / सिंचाई</label>
+        <select id="f_irr">
+          <option value="drip">Drip Irrigation</option>
+          <option value="rainfed">Rainfed / वर्षा आधारित</option>
+          <option value="flood">Flood / बाढ़ सिंचाई</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Carbon Credit Price (₹/tCO₂e)</label>
+        <input type="number" id="f_price" value="1200" min="500" max="5000">
+        <span class="hint">Current market: ₹800–₹2000</span>
+      </div>
+      <div class="field">
+        <label>Organic Farming? / जैविक खेती?</label>
+        <div class="radio-group" style="margin-top:6px">
+          <label class="radio-opt"><input type="radio" name="organic" value="yes"> हाँ (Organic)</label>
+          <label class="radio-opt"><input type="radio" name="organic" value="no" checked> नहीं</label>
+        </div>
+      </div>
+    </div>
+
+    <button class="calc-btn" onclick="calculate()">🌱 Carbon Credits Calculate करें</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="result-section card" id="resultSection">
+  <div class="card-header">📊 Carbon Credit Report — <span id="r_name"></span></div>
+  <div class="card-body">
+
+    <div style="background:#f1f8f1;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;display:flex;flex-wrap:wrap;gap:8px 20px;color:#2d5a3d">
+      <span>👤 <b id="ri_name"></b></span>
+      <span>📍 <b id="ri_loc"></b></span>
+      <span>🌾 <b id="ri_crop"></b></span>
+      <span>📐 <b id="ri_area_detail"></b></span>
+      <span id="ri_org_wrap"></span>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="val" id="r_carbon"></div>
+        <div class="unit">tCO₂e</div>
+        <div class="lbl">Total Carbon Stock</div>
+      </div>
+      <div class="metric">
+        <div class="val" id="r_credits"></div>
+        <div class="unit">Credits</div>
+        <div class="lbl">Carbon Credits</div>
+      </div>
+      <div class="metric" style="background:#fff8e1;border-color:#ffe082">
+        <div class="val" style="color:#e65100" id="r_income"></div>
+        <div class="unit">₹ Estimated</div>
+        <div class="lbl">Carbon Income</div>
+      </div>
+    </div>
+
+    <div class="bar-wrap">
+      <div class="bar-label">Carbon Sources Breakdown</div>
+      <div id="bars"></div>
+    </div>
+
+    <table class="breakdown" style="margin-top:14px">
+      <thead><tr><th>Component</th><th>Calculation</th><th>Carbon (tCO₂e)</th></tr></thead>
+      <tbody id="r_table"></tbody>
+    </table>
+
+    <div class="footer-note" style="margin-top:12px">
+      Method: Simplified Stock-Difference | 1 Credit = 1 tCO₂e | Price: ₹<span id="r_price_note"></span>/credit<br>
+      Report generated by <b>CHANGE TechLab</b> | changetechlab@gmail.com | Date: <span id="r_date"></span>
+    </div>
+
+    <div class="action-btns">
+      <button class="btn-print" onclick="window.print()">🖨️ Print / PDF Save करें</button>
+      <button class="btn-new" onclick="resetForm()">➕ नया Farmer</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div style="text-align: center; margin-top: 20px; font-size: 12px; color: #4a6a4a; line-height: 1.5; padding-bottom: 20px;" class="no-print">
+  <strong style="color: #1a5c2a;">CHANGE TechLab</strong><br>
+  Rural Intelligence + GIS + Business Planning Company<br>
+  <span style="font-style: italic;">From Rural Data to Business Decisions</span><br>
+  <div style="margin: 8px auto; height: 1px; background: #c8e6c9; width: 60%;"></div>
+  © 2026 CHANGE TechLab. All Rights Reserved.<br>
+  <a href="#" style="color: #2d8a45; text-decoration: none;">Privacy Policy</a> | <a href="#" style="color: #2d8a45; text-decoration: none;">Terms of Service</a><br>
+  <a href="mailto:changetechlab@outlook.com" style="color: #4a7a4a; text-decoration: none;">changetechlab@outlook.com</a>
+</div>
+
+<script>
+// Conversion constants (base: Nali)
+// 1 Nali = 200 sq.m
+// 1 Bigha = 5 Nali
+// 1 Acre = 10 Nali (Uttarakhand traditional)
+// 1 Hectare = 24.7105 Nali
+// 1 Muthi = 1/20 Nali
+const TO_NALI = { nali:1, bigha:5, acre:10, hac:24.7105, muthi:0.05 };
+const TO_HAC  = 1/24.7105; // 1 nali in hectares
+
+let currentHa = 0;
+
+function convertArea(from){
+  const val = parseFloat(document.getElementById('a_'+from).value);
+  if(isNaN(val)||val<0){ clearArea(from); return; }
+  const nali = val * TO_NALI[from];
+  const ha   = nali * TO_HAC;
+  currentHa  = ha;
+
+  // Fill other fields (rounded nicely)
+  const ids = ['nali','bigha','acre','hac','muthi'];
+  ids.forEach(u=>{
+    if(u===from) return;
+    const converted = nali / TO_NALI[u];
+    document.getElementById('a_'+u).value = +converted.toFixed(3);
+  });
+
+  // Summary
+  const naliVal  = nali.toFixed(2);
+  const bighaVal = (nali/5).toFixed(2);
+  const acreVal  = (nali/10).toFixed(3);
+  const hacVal   = ha.toFixed(4);
+  const summary  = document.getElementById('area_summary');
+  summary.style.display='block';
+  summary.innerHTML = `✅ रकबा: <b>${naliVal} नाली</b> = <b>${bighaVal} बीघा</b> = <b>${acreVal} Acre</b> = <b>${hacVal} Hectare</b>`;
+}
+
+function clearArea(except){
+  ['nali','bigha','acre','hac','muthi'].forEach(u=>{
+    if(u!==except) document.getElementById('a_'+u).value='';
+  });
+  document.getElementById('area_summary').style.display='none';
+  currentHa=0;
+}
+
+function calculate(){
+  const name    = document.getElementById('f_name').value.trim()||'Farmer';
+  const village = document.getElementById('f_village').value.trim();
+  const block   = document.getElementById('f_block').value.trim();
+  const district= document.getElementById('f_district').value.trim();
+  const trees   = parseInt(document.getElementById('f_trees').value)||0;
+  const crop    = document.getElementById('f_crop').value;
+  const irr     = document.getElementById('f_irr').value;
+  const organic = document.querySelector('input[name="organic"]:checked').value;
+  const price   = parseFloat(document.getElementById('f_price').value)||1200;
+
+  // Get area from whichever unit was filled
+  if(!currentHa||currentHa<=0){
+    alert('कृपया खेत का रकबा भरें (नाली, बीघा, Acre या Hectare में से कोई एक)');
+    return;
+  }
+  const area = currentHa;
+
+  // Display area string
+  const nali  = area/TO_HAC;
+  const bigha = nali/5;
+  const areaStr = `${nali.toFixed(1)} नाली / ${bigha.toFixed(1)} बीघा / ${area.toFixed(3)} Ha`;
+
+  const cropMult = {wheat:1.5,millet:1.6,vegetable:1.3,fruit:1.8,agroforestry:2.2};
+  const cropNames= {wheat:'Wheat/गेहूं',millet:'Millet/मंडुवा',vegetable:'Vegetable/सब्जी',fruit:'Fruit/माल्टा',agroforestry:'Agroforestry'};
+  const irrNames = {drip:'Drip Irrigation',rainfed:'Rainfed/वर्षा',flood:'Flood Irrigation'};
+
+  const soilCarbon   = area * cropMult[crop];
+  const treeCarbon   = trees * 0.025;
+  const organicBonus = organic==='yes' ? 0.5 : 0;
+  const irrBonus     = irr==='drip' ? 0.2 : 0;
+  const totalCarbon  = soilCarbon + treeCarbon + organicBonus + irrBonus;
+  const income       = totalCarbon * price;
+
+  document.getElementById('r_name').textContent      = name;
+  document.getElementById('ri_name').textContent     = name;
+  document.getElementById('ri_crop').textContent     = cropNames[crop];
+  document.getElementById('ri_area_detail').textContent = areaStr;
+  const loc = [village,block,district].filter(Boolean).join(', ')||'Uttarakhand';
+  document.getElementById('ri_loc').textContent      = loc;
+  document.getElementById('ri_org_wrap').innerHTML   = organic==='yes'
+    ? '<span class="badge-org badge-good">✓ Organic</span>'
+    : '<span class="badge-org">Non-Organic</span>';
+
+  document.getElementById('r_carbon').textContent   = totalCarbon.toFixed(2);
+  document.getElementById('r_credits').textContent  = totalCarbon.toFixed(2);
+  document.getElementById('r_income').textContent   = '₹'+Math.round(income).toLocaleString('en-IN');
+  document.getElementById('r_price_note').textContent = price.toLocaleString('en-IN');
+  document.getElementById('r_date').textContent     = new Date().toLocaleDateString('hi-IN');
+
+  // Bars
+  const comps = [
+    {label:'Soil Carbon',           val:soilCarbon},
+    {label:'Tree Carbon',           val:treeCarbon},
+    {label:'Organic Bonus',         val:organicBonus},
+    {label:'Drip Irrigation Bonus', val:irrBonus},
+  ].filter(c=>c.val>0);
+  document.getElementById('bars').innerHTML = comps.map(c=>{
+    const pct = Math.round((c.val/totalCarbon)*100);
+    return `<div style="margin-bottom:6px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#2d5a3d;margin-bottom:3px">
+        <span>${c.label}</span><span>${c.val.toFixed(3)} tCO₂e</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"><span>${pct}%</span></div></div>
+    </div>`;
+  }).join('');
+
+  // Table
+  const rows=[
+    ['Soil Carbon',`${area.toFixed(4)} ha × ${cropMult[crop]} (${cropNames[crop]})`,soilCarbon.toFixed(3)],
+    ['Tree Carbon',`${trees} पेड़ × 0.025`,treeCarbon.toFixed(3)],
+  ];
+  if(organicBonus) rows.push(['Organic Farming Bonus','Fixed bonus','0.500']);
+  if(irrBonus)     rows.push(['Drip Irrigation Bonus','Fixed bonus','0.200']);
+  rows.push([`<b>TOTAL</b>`,`<b>₹${price.toLocaleString('en-IN')}/tCO₂e × ${totalCarbon.toFixed(2)}</b>`,`<b>${totalCarbon.toFixed(2)}</b>`]);
+  document.getElementById('r_table').innerHTML = rows.map(r=>
+    `<tr><td>${r[0]}</td><td>${r[1]}</td><td style="text-align:right">${r[2]}</td></tr>`
+  ).join('');
+
+  document.getElementById('resultSection').classList.add('show');
+  document.getElementById('resultSection').scrollIntoView({behavior:'smooth'});
+}
+
+function resetForm(){
+  document.getElementById('resultSection').classList.remove('show');
+  document.getElementById('f_name').value='';
+  ['nali','bigha','acre','hac','muthi'].forEach(u=>document.getElementById('a_'+u).value='');
+  document.getElementById('area_summary').style.display='none';
+  document.getElementById('f_trees').value='0';
+  currentHa=0;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
