@@ -4,48 +4,48 @@
  * Handles asset caching, background sync, and API caching
  */
 
-const CACHE_VERSION = 'agri-monitor-v1.1.0';
+const CACHE_VERSION = 'agri-monitor-v1.1.1';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
 
 // Assets to cache on install (app shell)
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/css/style.css',
-  '/js/app.js',
-  '/js/map.js',
-  '/js/layers.js',
-  '/js/ndvi.js',
-  '/js/farmers.js',
-  '/js/alerts.js',
-  '/js/clf.js',
-  '/js/auth.js',
-  '/js/upload.js',
-  '/js/charts.js',
-  '/js/offline.js',
-  '/js/report.js',
-  '/js/dummyData.js',
-  '/js/config.js',
-  '/manifest.json',
+  './',
+  './index.html',
+  './css/style.css',
+  './js/app.js',
+  './js/map.js',
+  './js/layers.js',
+  './js/ndvi.js',
+  './js/farmers.js',
+  './js/alerts.js',
+  './js/clf.js',
+  './js/auth.js',
+  './js/upload.js',
+  './js/charts.js',
+  './js/offline.js',
+  './js/report.js',
+  './js/dummyData.js',
+  './js/config.js',
+  './manifest.json',
   // Local Vendor Assets
-  '/js/vendor/leaflet.min.css',
-  '/js/vendor/leaflet.min.js',
-  '/js/vendor/leaflet.draw.min.css',
-  '/js/vendor/leaflet.draw.min.js',
-  '/js/vendor/MarkerCluster.min.css',
-  '/js/vendor/MarkerCluster.Default.min.css',
-  '/js/vendor/leaflet.markercluster.min.js',
-  '/js/vendor/chart.min.js',
-  '/js/vendor/supabase-js.min.js',
-  '/js/vendor/jspdf.umd.min.js',
-  '/public/fonts/noto-sans-devanagari.woff2',
-  '/carbon_calculator.html',
-  '/climate-activities.html',
-  '/css/carbon-calc.css',
-  '/css/climate.css',
-  '/js/modules/carbon-calc.js',
-  '/js/modules/climate.js'
+  './js/vendor/leaflet.min.css',
+  './js/vendor/leaflet.min.js',
+  './js/vendor/leaflet.draw.min.css',
+  './js/vendor/leaflet.draw.min.js',
+  './js/vendor/MarkerCluster.min.css',
+  './js/vendor/MarkerCluster.Default.min.css',
+  './js/vendor/leaflet.markercluster.min.js',
+  './js/vendor/chart.min.js',
+  './js/vendor/supabase-js.min.js',
+  './js/vendor/jspdf.umd.min.js',
+  './public/fonts/noto-sans-devanagari.woff2',
+  './carbon_calculator.html',
+  './climate-activities.html',
+  './css/carbon-calc.css',
+  './css/climate.css',
+  './js/modules/carbon-calc.js',
+  './js/modules/climate.js'
 ];
 
 // Tile hosts — use cache-then-network for map tiles
@@ -152,7 +152,7 @@ async function staticStrategy(request) {
   } catch (err) {
     // Return offline page for navigation requests
     if (request.mode === 'navigate') {
-      const offlinePage = await caches.match('/index.html');
+      const offlinePage = await caches.match('./index.html');
       return offlinePage || new Response('Offline — Agri Monitor', { status: 503 });
     }
     throw err;
@@ -226,10 +226,10 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body || data.body_hindi || 'नई अलर्ट मिली',
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-72.png',
+    icon: './icons/icon-192.png',
+    badge: './icons/icon-72.png',
     tag: data.alert_type || 'agri-alert',
-    data: { url: data.url || '/?tab=alerts' },
+    data: { url: data.url || './?tab=alerts' },
     actions: [
       { action: 'view', title: 'देखें' },
       { action: 'dismiss', title: 'बंद करें' }

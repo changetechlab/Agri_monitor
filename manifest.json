@@ -2,7 +2,7 @@
   "name": "Agri Monitor — CHANGE TechLab",
   "short_name": "Agri Monitor",
   "description": "Satellite + Field Data + Local Intelligence for Mountain Farming",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#0d1117",
   "theme_color": "#16a34a",
