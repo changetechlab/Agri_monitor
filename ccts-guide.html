@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="hi" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#16a34a">
+  <title>India CCTS Guide — Agri Monitor | CHANGE TechLab</title>
+  <meta name="description" content="India Carbon Credit Trading Scheme (CCTS) — किसानों के लिए Compliance vs Voluntary Market, Aggregation Model और Carbon Credit Pathway की पूरी जानकारी।">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-primary:#0d1117; --bg-secondary:#161b22; --bg-tertiary:#1c2430;
+      --bg-card:#1e2a3a; --bg-hover:#243040;
+      --border:rgba(255,255,255,0.08); --border-accent:rgba(34,197,94,0.3);
+      --text-primary:#e2e8f0; --text-secondary:#94a3b8; --text-muted:#64748b;
+      --green:#22c55e; --green-dark:#16a34a; --green-light:#4ade80;
+      --teal:#14b8a6; --blue:#3b82f6; --yellow:#f59e0b;
+      --red:#ef4444; --purple:#a855f7; --orange:#f97316; --cyan:#06b6d4;
+      --radius:8px; --radius-lg:14px;
+      --shadow:0 4px 24px rgba(0,0,0,0.4);
+      --font-hindi:'Noto Sans Devanagari',sans-serif;
+      --font-en:'Inter',sans-serif;
+    }
+    [data-theme="light"] {
+      --bg-primary:#f0fdf4; --bg-secondary:#fff; --bg-tertiary:#f8fafc;
+      --bg-card:#fff; --bg-hover:#f1f5f9;
+      --border:rgba(0,0,0,0.08);
+      --text-primary:#0f172a; --text-secondary:#475569; --text-muted:#94a3b8;
+      --shadow:0 4px 24px rgba(0,0,0,0.08);
+    }
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html,body {
+      min-height:100vh; font-family:var(--font-hindi),var(--font-en);
+      background:var(--bg-primary); color:var(--text-primary);
+      font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased;
+    }
+    a { color:var(--green); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+    button { cursor:pointer; border:none; background:none; font-family:inherit; }
+
+    /* TOPBAR */
+    #topbar {
+      height:52px; background:var(--bg-secondary); border-bottom:1px solid var(--border);
+      display:flex; align-items:center; padding:0 20px; gap:12px;
+      position:sticky; top:0; z-index:100;
+    }
+    .brand { display:flex; align-items:center; gap:6px; }
+    .brand-icon { font-size:20px; }
+    .brand-title { font-size:15px; font-weight:700; }
+    .brand-title span { color:var(--green); }
+    .brand-badge { font-size:9px; background:var(--green-dark); color:#fff; padding:1px 5px; border-radius:3px; font-weight:600; }
+    .btn-back { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:500; color:var(--text-secondary); background:var(--bg-tertiary); border:1px solid var(--border); transition:all .2s; }
+    .btn-back:hover { border-color:var(--green); color:var(--green); }
+    .topbar-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
+    .btn-icon { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--text-secondary); transition:all .2s; font-size:16px; }
+    .btn-icon:hover { background:var(--bg-hover); color:var(--text-primary); }
+    .breadcrumb { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted); }
+    .breadcrumb a { color:var(--text-muted); }
+    .breadcrumb a:hover { color:var(--green); }
+
+    /* HERO */
+    .hero {
+      background:linear-gradient(135deg,#0d1f3c 0%,#1a3a5c 50%,#0d2a1f 100%);
+      border-bottom:1px solid var(--border);
+      padding:40px 20px 36px;
+      text-align:center; position:relative; overflow:hidden;
+    }
+    .hero::before {
+      content:''; position:absolute; inset:0;
+      background:radial-gradient(ellipse at 30% 50%,rgba(34,197,94,0.08) 0%,transparent 60%),
+                 radial-gradient(ellipse at 70% 50%,rgba(59,130,246,0.08) 0%,transparent 60%);
+      pointer-events:none;
+    }
+    .hero-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      background:rgba(249,115,22,0.12); color:#fb923c;
+      border:1px solid rgba(249,115,22,0.25); border-radius:20px;
+      padding:4px 14px; font-size:11px; font-weight:600;
+      margin-bottom:16px; letter-spacing:0.3px;
+    }
+    .hero-title { font-size:28px; font-weight:800; line-height:1.2; margin-bottom:10px; }
+    .hero-title .hi { color:var(--green); }
+    .hero-title .en { color:var(--blue); font-family:var(--font-en); font-size:22px; display:block; }
+    .hero-sub { font-size:13px; color:var(--text-secondary); max-width:600px; margin:0 auto 20px; line-height:1.7; }
+    .hero-tags { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+    .hero-tag { font-size:10px; padding:3px 10px; border-radius:10px; font-weight:600; }
+    .hero-tag.g { background:rgba(34,197,94,0.12); color:var(--green); border:1px solid rgba(34,197,94,0.2); }
+    .hero-tag.b { background:rgba(59,130,246,0.12); color:var(--blue); border:1px solid rgba(59,130,246,0.2); }
+    .hero-tag.o { background:rgba(249,115,22,0.12); color:var(--orange); border:1px solid rgba(249,115,22,0.2); }
+    .hero-tag.y { background:rgba(245,158,11,0.12); color:var(--yellow); border:1px solid rgba(245,158,11,0.2); }
+
+    /* NAV TABS */
+    .page-nav {
+      background:var(--bg-secondary); border-bottom:1px solid var(--border);
+      display:flex; overflow-x:auto; scrollbar-width:none;
+      position:sticky; top:52px; z-index:90;
+    }
+    .page-nav::-webkit-scrollbar { display:none; }
+    .nav-btn {
+      display:flex; align-items:center; gap:6px;
+      padding:12px 18px; font-size:12px; font-weight:600;
+      color:var(--text-muted); white-space:nowrap;
+      border-bottom:2px solid transparent; transition:all .2s;
+    }
+    .nav-btn:hover { color:var(--text-primary); background:var(--bg-hover); }
+    .nav-btn.active { color:var(--orange); border-bottom-color:var(--orange); }
+
+    /* PAGE CONTAINER */
+    .container { max-width:900px; margin:0 auto; padding:32px 20px 60px; }
+
+    /* SECTION */
+    .section { margin-bottom:40px; }
+    .section-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+    .section-icon { font-size:28px; }
+    .section-title { font-size:18px; font-weight:800; }
+    .section-sub { font-size:12px; color:var(--text-muted); margin-top:2px; }
+
+    /* INFO CARD */
+    .info-card {
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:var(--radius-lg); padding:20px; margin-bottom:14px;
+    }
+    .info-card p { font-size:13px; color:var(--text-secondary); line-height:1.75; }
+    .info-card p + p { margin-top:10px; }
+    .info-card strong { color:var(--text-primary); }
+
+    /* ALERT BOXES */
+    .alert { border-radius:var(--radius); padding:14px 16px; margin-bottom:14px; display:flex; gap:12px; }
+    .alert-icon { font-size:20px; flex-shrink:0; margin-top:2px; }
+    .alert-body { flex:1; }
+    .alert-title { font-size:12px; font-weight:700; margin-bottom:4px; }
+    .alert-text { font-size:12px; line-height:1.65; }
+    .alert.red { background:rgba(239,68,68,0.07); border:1px solid rgba(239,68,68,0.2); }
+    .alert.red .alert-title { color:var(--red); }
+    .alert.red .alert-text { color:#fca5a5; }
+    .alert.green { background:rgba(34,197,94,0.07); border:1px solid rgba(34,197,94,0.2); }
+    .alert.green .alert-title { color:var(--green); }
+    .alert.green .alert-text { color:#86efac; }
+    .alert.blue { background:rgba(59,130,246,0.07); border:1px solid rgba(59,130,246,0.2); }
+    .alert.blue .alert-title { color:var(--blue); }
+    .alert.blue .alert-text { color:#93c5fd; }
+    .alert.yellow { background:rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.2); }
+    .alert.yellow .alert-title { color:var(--yellow); }
+    .alert.yellow .alert-text { color:#fde68a; }
+    .alert.orange { background:rgba(249,115,22,0.07); border:1px solid rgba(249,115,22,0.2); }
+    .alert.orange .alert-title { color:var(--orange); }
+    .alert.orange .alert-text { color:#fdba74; }
+
+    /* COMPARISON TABLE */
+    .compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
+    @media(max-width:600px) { .compare-grid { grid-template-columns:1fr; } }
+    .compare-card { border-radius:var(--radius-lg); padding:18px; }
+    .compare-card.compliance {
+      background:linear-gradient(135deg,rgba(239,68,68,0.06),rgba(239,68,68,0.03));
+      border:1.5px solid rgba(239,68,68,0.25);
+    }
+    .compare-card.voluntary {
+      background:linear-gradient(135deg,rgba(34,197,94,0.06),rgba(34,197,94,0.03));
+      border:1.5px solid rgba(34,197,94,0.25);
+    }
+    .compare-head { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+    .compare-icon { font-size:22px; }
+    .compare-title { font-size:14px; font-weight:700; }
+    .compare-card.compliance .compare-title { color:var(--red); }
+    .compare-card.voluntary  .compare-title { color:var(--green); }
+    .compare-list { list-style:none; display:flex; flex-direction:column; gap:8px; }
+    .compare-list li { display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--text-secondary); line-height:1.5; }
+    .compare-list li::before { flex-shrink:0; margin-top:2px; }
+    .compare-card.compliance .compare-list li::before { content:'✗'; color:var(--red); font-weight:700; }
+    .compare-card.voluntary  .compare-list li::before { content:'✓'; color:var(--green); font-weight:700; }
+
+    /* PATHWAY STEPS */
+    .pathway { display:flex; flex-direction:column; gap:0; }
+    .pathway-step {
+      display:flex; gap:16px; position:relative;
+    }
+    .pathway-step:not(:last-child)::after {
+      content:''; position:absolute; left:19px; top:44px;
+      width:2px; height:calc(100% - 20px);
+      background:linear-gradient(to bottom,var(--green-dark),transparent);
+    }
+    .step-num {
+      width:40px; height:40px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:14px; font-weight:800; font-family:var(--font-en);
+      border:2px solid var(--green-dark); color:var(--green);
+      background:rgba(34,197,94,0.08); z-index:1;
+    }
+    .step-body { flex:1; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; margin-bottom:16px; }
+    .step-title { font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:5px; display:flex; align-items:center; gap:8px; }
+    .step-desc { font-size:12px; color:var(--text-secondary); line-height:1.65; }
+    .step-badge { font-size:9px; padding:2px 7px; border-radius:6px; font-weight:600; }
+    .step-badge.who { background:rgba(59,130,246,0.12); color:var(--blue); }
+    .step-badge.action { background:rgba(34,197,94,0.12); color:var(--green); }
+    .step-badge.tool { background:rgba(245,158,11,0.12); color:var(--yellow); }
+
+    /* PROJECT TYPE CARDS */
+    .project-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+    @media(max-width:700px) { .project-grid { grid-template-columns:repeat(2,1fr); } }
+    @media(max-width:450px) { .project-grid { grid-template-columns:1fr; } }
+    .project-card {
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:var(--radius-lg); padding:16px;
+      transition:transform .2s, border-color .2s;
+    }
+    .project-card:hover { transform:translateY(-2px); border-color:var(--border-accent); }
+    .project-card-icon { font-size:28px; margin-bottom:8px; }
+    .project-card-title { font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:5px; }
+    .project-card-desc { font-size:11px; color:var(--text-secondary); line-height:1.5; margin-bottom:8px; }
+    .project-card-status {
+      display:inline-flex; align-items:center; gap:4px;
+      font-size:9px; padding:2px 8px; border-radius:8px; font-weight:600;
+    }
+    .status-eligible { background:rgba(34,197,94,0.12); color:var(--green); }
+    .status-future { background:rgba(245,158,11,0.12); color:var(--yellow); }
+    .status-coming { background:rgba(59,130,246,0.12); color:var(--blue); }
+
+    /* AGGREGATION MODEL */
+    .agg-diagram {
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:var(--radius-lg); padding:24px; margin-bottom:14px;
+      text-align:center;
+    }
+    .agg-row { display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; margin:8px 0; }
+    .agg-box {
+      border-radius:10px; padding:10px 14px;
+      font-size:12px; font-weight:600; text-align:center; min-width:100px;
+    }
+    .agg-box.farmer { background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.25); color:var(--green); }
+    .agg-box.clf { background:rgba(20,184,166,0.12); border:1px solid rgba(20,184,166,0.25); color:var(--teal); }
+    .agg-box.project { background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.25); color:var(--blue); }
+    .agg-box.registry { background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.25); color:var(--yellow); }
+    .agg-box.credit { background:rgba(249,115,22,0.12); border:1px solid rgba(249,115,22,0.25); color:var(--orange); }
+    .agg-arrow { font-size:18px; color:var(--text-muted); }
+    .agg-label { font-size:10px; color:var(--text-muted); margin:4px 0; }
+    .agg-title { font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:16px; }
+
+    /* INCOME TABLE */
+    .income-table { width:100%; border-collapse:collapse; margin-bottom:14px; }
+    .income-table th { padding:10px 12px; text-align:left; font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; background:var(--bg-tertiary); border-bottom:1px solid var(--border); }
+    .income-table td { padding:10px 12px; font-size:12px; border-bottom:1px solid var(--border); color:var(--text-secondary); }
+    .income-table tr:last-child td { border-bottom:none; font-weight:700; color:var(--text-primary); }
+    .income-table tr:hover td { background:var(--bg-hover); }
+    .td-green { color:var(--green) !important; font-weight:700 !important; }
+    .td-yellow { color:var(--yellow) !important; font-weight:700 !important; }
+
+    /* ROADMAP TIMELINE */
+    .timeline { position:relative; padding-left:28px; }
+    .timeline::before { content:''; position:absolute; left:8px; top:6px; bottom:6px; width:2px; background:linear-gradient(to bottom,var(--blue),var(--green)); border-radius:2px; }
+    .timeline-item { position:relative; margin-bottom:20px; }
+    .timeline-dot { position:absolute; left:-24px; top:4px; width:14px; height:14px; border-radius:50%; border:2px solid; }
+    .timeline-dot.done { background:var(--green); border-color:var(--green); }
+    .timeline-dot.active { background:var(--yellow); border-color:var(--yellow); box-shadow:0 0 8px rgba(245,158,11,0.4); }
+    .timeline-dot.future { background:transparent; border-color:var(--text-muted); }
+    .timeline-date { font-size:10px; color:var(--text-muted); font-family:var(--font-en); font-weight:600; margin-bottom:3px; }
+    .timeline-title { font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:4px; }
+    .timeline-desc { font-size:11px; color:var(--text-secondary); line-height:1.5; }
+
+    /* GLOSSARY */
+    .glossary { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    @media(max-width:550px) { .glossary { grid-template-columns:1fr; } }
+    .glossary-item { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; }
+    .glossary-term { font-size:11px; font-weight:700; color:var(--teal); font-family:var(--font-en); margin-bottom:4px; }
+    .glossary-def { font-size:11px; color:var(--text-secondary); line-height:1.5; }
+
+    /* CTA */
+    .cta-bar {
+      background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(20,184,166,0.08));
+      border:1px solid rgba(34,197,94,0.2); border-radius:var(--radius-lg);
+      padding:20px 24px; display:flex; align-items:center; gap:16px;
+      flex-wrap:wrap; margin-bottom:20px;
+    }
+    .cta-icon { font-size:32px; flex-shrink:0; }
+    .cta-text { flex:1; }
+    .cta-title { font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:4px; }
+    .cta-desc { font-size:12px; color:var(--text-secondary); line-height:1.5; }
+    .cta-btns { display:flex; gap:8px; flex-wrap:wrap; flex-shrink:0; }
+    .btn-primary { display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:var(--radius); font-size:12px; font-weight:600; color:#fff; background:linear-gradient(135deg,var(--green-dark),var(--teal)); border:none; transition:all .2s; }
+    .btn-primary:hover { opacity:0.9; transform:translateY(-1px); }
+    .btn-outline { display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:var(--radius); font-size:12px; font-weight:600; color:var(--text-secondary); background:var(--bg-tertiary); border:1px solid var(--border); transition:all .2s; }
+    .btn-outline:hover { border-color:var(--green); color:var(--green); }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width:6px; height:6px; }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+    @media(max-width:600px) {
+      .hero-title { font-size:20px; }
+      .hero-title .en { font-size:16px; }
+      .container { padding:20px 14px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header id="topbar">
+  <a href="index.html" class="btn-back">← वापस</a>
+  <div class="brand">
+    <span class="brand-icon">🌾</span>
+    <span class="brand-title">Agri <span>Monitor</span></span>
+    <span class="brand-badge">CHANGE TechLab</span>
+  </div>
+  <nav class="breadcrumb">
+    <a href="index.html">Dashboard</a>
+    <span style="color:var(--border)">›</span>
+    <a href="carbon_calculator.html">Carbon Calculator</a>
+    <span style="color:var(--border)">›</span>
+    <span style="color:var(--text-primary);font-weight:600;">India CCTS Guide</span>
+  </nav>
+  <div class="topbar-right">
+    <button class="btn-icon" id="btn-theme" title="Theme">☀️</button>
+  </div>
+</header>
+
+<!-- PAGE NAV -->
+<nav class="page-nav" id="page-nav">
+  <button class="nav-btn active" onclick="scrollTo('sec-what')">📋 CCTS क्या है?</button>
+  <button class="nav-btn" onclick="scrollTo('sec-compare')">⚖️ Compliance vs Voluntary</button>
+  <button class="nav-btn" onclick="scrollTo('sec-projects')">🌱 Project Types</button>
+  <button class="nav-btn" onclick="scrollTo('sec-pathway')">🛤️ Farmer Pathway</button>
+  <button class="nav-btn" onclick="scrollTo('sec-aggregation')">🤝 Aggregation Model</button>
+  <button class="nav-btn" onclick="scrollTo('sec-income')">💰 Income Estimate</button>
+  <button class="nav-btn" onclick="scrollTo('sec-roadmap')">🗺️ Roadmap</button>
+  <button class="nav-btn" onclick="scrollTo('sec-glossary')">📖 Glossary</button>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">🇮🇳 India Carbon Credit Trading Scheme (CCTS) — BEE, MoEFCC</div>
+  <h1 class="hero-title">
+    किसानों के लिए CCTS Guide
+    <span class="en">Carbon Credit Market — Compliance vs Voluntary</span>
+  </h1>
+  <p class="hero-sub">
+    CCTS का Compliance हिस्सा बड़े Industrial units के लिए है।
+    लेकिन Voluntary Offset Market और Aggregation Model के ज़रिए
+    किसान और CLF groups carbon credits generate करके income earn कर सकते हैं।
+  </p>
+  <div class="hero-tags">
+    <span class="hero-tag g">✅ Voluntary Market — Farmer Eligible</span>
+    <span class="hero-tag b">📐 Aggregation Model</span>
+    <span class="hero-tag o">🌱 Biochar · AWD · Agroforestry · Biogas</span>
+    <span class="hero-tag y">⏳ Agriculture Linkage — Coming Soon</span>
+  </div>
+</div>
+
+<main class="container">
+
+  <!-- ====================== WHAT IS CCTS ====================== -->
+  <section class="section" id="sec-what">
+    <div class="section-header">
+      <span class="section-icon">📋</span>
+      <div>
+        <div class="section-title">CCTS क्या है?</div>
+        <div class="section-sub">India Carbon Credit Trading Scheme — BEE / MoEFCC</div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <p>
+        <strong>CCTS (Carbon Credit Trading Scheme)</strong> भारत सरकार की एक policy है जिसे <strong>BEE (Bureau of Energy Efficiency)</strong> और <strong>MoEFCC (Ministry of Environment)</strong> मिलकर manage करते हैं।
+        यह scheme <strong>Energy Conservation Act 2001 (amended 2022)</strong> के तहत काम करती है।
+      </p>
+      <p>
+        इस scheme के तहत entities अपने greenhouse gas emissions को reduce करके <strong>Carbon Credits (CCUs — Carbon Credit Units)</strong> generate कर सकती हैं।
+        ये credits <strong>Indian Carbon Market (ICM)</strong> पर trade होती हैं।
+      </p>
+      <p>
+        CCTS में दो हिस्से हैं: <strong>Compliance Segment</strong> (अनिवार्य, बड़े industry के लिए) और <strong>Offset/Voluntary Segment</strong> (वैकल्पिक, agriculture और अन्य sectors के लिए)।
+      </p>
+    </div>
+
+    <div class="alert yellow">
+      <span class="alert-icon">⚠️</span>
+      <div class="alert-body">
+        <div class="alert-title">महत्वपूर्ण समझें</div>
+        <div class="alert-text">
+          CCTS के Compliance part में directly participate करने के लिए आपको एक <strong>"Obligated Entity"</strong> होना ज़रूरी है — यानी कोई बड़ी manufacturing/industrial company जिसका energy consumption 100,000 MTOE से ज़्यादा हो। Individual farmer या छोटी CLF इस category में नहीं आती।
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== COMPLIANCE VS VOLUNTARY ====================== -->
+  <section class="section" id="sec-compare">
+    <div class="section-header">
+      <span class="section-icon">⚖️</span>
+      <div>
+        <div class="section-title">Compliance vs Voluntary Market</div>
+        <div class="section-sub">किसान किस segment में participate कर सकते हैं?</div>
+      </div>
+    </div>
+
+    <div class="compare-grid">
+      <div class="compare-card compliance">
+        <div class="compare-head">
+          <span class="compare-icon">🏭</span>
+          <div>
+            <div class="compare-title">Compliance Segment</div>
+            <div style="font-size:10px;color:var(--text-muted);">अनिवार्य — Large Industry</div>
+          </div>
+        </div>
+        <ul class="compare-list">
+          <li>केवल Obligated Entities के लिए (Designated Consumers)</li>
+          <li>100,000+ MTOE energy वाले industrial plants</li>
+          <li>BEE द्वारा assigned Emission Intensity Targets</li>
+          <li>Non-compliance पर penalty का प्रावधान</li>
+          <li>Steel, Cement, Fertilizer, Chemicals, Textile जैसे sectors</li>
+          <li><strong>Individual farmer — eligible नहीं</strong></li>
+        </ul>
+      </div>
+      <div class="compare-card voluntary">
+        <div class="compare-head">
+          <span class="compare-icon">🌾</span>
+          <div>
+            <div class="compare-title">Voluntary / Offset Segment</div>
+            <div style="font-size:10px;color:var(--text-muted);">वैकल्पिक — Farmer Eligible ✓</div>
+          </div>
+        </div>
+        <ul class="compare-list">
+          <li>Agriculture, Forestry, Waste, Renewable Energy eligible</li>
+          <li>CLF / SHG groups aggregation के ज़रिए participate कर सकते हैं</li>
+          <li>Project Developer (NGO / NBFC / Company) के साथ register करें</li>
+          <li>MRV data (जैसे Agri Monitor का MRV module) उपयोग होगा</li>
+          <li>Credits open market पर बेचे जा सकते हैं</li>
+          <li><strong>Farmer CLF groups — eligible ✓</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="alert green">
+      <span class="alert-icon">✅</span>
+      <div class="alert-body">
+        <div class="alert-title">किसान के लिए रास्ता — Voluntary Offset Market</div>
+        <div class="alert-text">
+          Agri Monitor का <strong>Climate Actions MRV Module</strong> इसी Voluntary Segment के लिए MRV data तैयार करता है।
+          Field records + Evidence + Computation — यह तीनों layers एक auditable estimate देती हैं जो एक Project Developer को offset credits register करने में मदद करती हैं।
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== PROJECT TYPES ====================== -->
+  <section class="section" id="sec-projects">
+    <div class="section-header">
+      <span class="section-icon">🌱</span>
+      <div>
+        <div class="section-title">Voluntary Offset के लिए Project Types</div>
+        <div class="section-sub">CCTS Offset Mechanism में कौन से projects eligible हैं</div>
+      </div>
+    </div>
+
+    <div class="project-grid">
+      <div class="project-card">
+        <div class="project-card-icon">☀️</div>
+        <div class="project-card-title">Renewable Energy</div>
+        <div class="project-card-desc">Solar pump, small hydro, biomass energy — electricity से emissions avoid करना</div>
+        <span class="project-card-status status-eligible">✅ Eligible Now</span>
+      </div>
+      <div class="project-card">
+        <div class="project-card-icon">🐄</div>
+        <div class="project-card-title">Biogas / Biomethane</div>
+        <div class="project-card-desc">गाय के गोबर से biogas बनाना — methane को capture करके fuel बनाना</div>
+        <span class="project-card-status status-eligible">✅ Eligible Now</span>
+      </div>
+      <div class="project-card">
+        <div class="project-card-icon">🌳</div>
+        <div class="project-card-title">Afforestation</div>
+        <div class="project-card-desc">खेतों की मेड़ पर पेड़ लगाना, community forest — carbon sink बनाना</div>
+        <span class="project-card-status status-eligible">✅ Eligible Now</span>
+      </div>
+      <div class="project-card">
+        <div class="project-card-icon">♻️</div>
+        <div class="project-card-title">Waste Management</div>
+        <div class="project-card-desc">Agricultural waste (पराली) का proper disposal — burning avoid करना</div>
+        <span class="project-card-status status-eligible">✅ Eligible Now</span>
+      </div>
+      <div class="project-card">
+        <div class="project-card-icon">🔥</div>
+        <div class="project-card-title">Biochar Production</div>
+        <div class="project-card-desc">पराली → Biochar → खेत में डालना। Durable carbon sequestration</div>
+        <span class="project-card-status status-future">⏳ Agriculture Linkage Pending</span>
+      </div>
+      <div class="project-card">
+        <div class="project-card-icon">💧</div>
+        <div class="project-card-title">AWD — Paddy</div>
+        <div class="project-card-desc">Alternate Wetting & Drying से methane emission reduction — paddy fields</div>
+        <span class="project-card-status status-future">⏳ Agriculture Linkage Pending</span>
+      </div>
+      <div class="project-card">
+        <div class="project-card-icon">🌾</div>
+        <div class="project-card-title">SOC Enhancement</div>
+        <div class="project-card-desc">Compost/vermicompost से मिट्टी में कार्बन बढ़ाना — Soil Carbon credits</div>
+        <span class="project-card-status status-future">⏳ Agriculture Linkage Pending</span>
+      </div>
+      <div class="project-card">
+        <div class="project-card-icon">🚰</div>
+        <div class="project-card-title">Efficient Irrigation</div>
+        <div class="project-card-desc">Drip / sprinkler irrigation से energy और water saving — indirect carbon benefit</div>
+        <span class="project-card-status status-coming">🔵 Indirect Benefit</span>
+      </div>
+      <div class="project-card">
+        <div class="project-card-icon">🌿</div>
+        <div class="project-card-title">Agroforestry</div>
+        <div class="project-card-desc">फसलों के साथ पेड़ — carbon sequestration + biodiversity co-benefit</div>
+        <span class="project-card-status status-future">⏳ Agriculture Linkage Pending</span>
+      </div>
+    </div>
+
+    <div class="alert blue">
+      <span class="alert-icon">📌</span>
+      <div class="alert-body">
+        <div class="alert-title">Agriculture Linkage — क्यों pending है?</div>
+        <div class="alert-text">
+          CCTS offset methodology अभी primarily <strong>energy, waste और forestry</strong> sectors के लिए finalized है।
+          Agriculture-specific offset methodology (AWD, SOC, Biochar) अभी develop हो रही है — MoAFW + BEE + NABARD मिलकर काम कर रहे हैं।
+          Agri Monitor का MRV data इसी methodology development में contribute करेगा।
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== FARMER PATHWAY ====================== -->
+  <section class="section" id="sec-pathway">
+    <div class="section-header">
+      <span class="section-icon">🛤️</span>
+      <div>
+        <div class="section-title">Farmer Carbon Credit Pathway</div>
+        <div class="section-sub">Step-by-step — किसान credits कैसे generate और sell करेगा</div>
+      </div>
+    </div>
+
+    <div class="alert orange">
+      <span class="alert-icon">🎯</span>
+      <div class="alert-body">
+        <div class="alert-title">Key Insight</div>
+        <div class="alert-text">
+          Individual farmer directly CCTS registry पर register नहीं करता। इसके लिए एक <strong>Project Developer / Aggregator</strong> (जैसे NABARD, CLF Federation, NCDEX, या NGO) की ज़रूरत होती है जो multiple farmers के data को एक project में pool करे।
+        </div>
+      </div>
+    </div>
+
+    <div class="pathway">
+      <div class="pathway-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">
+            Climate Practice अपनाएं
+            <span class="step-badge who">किसान</span>
+            <span class="step-badge action">AWD / Biochar / Agroforestry / Biogas</span>
+          </div>
+          <div class="step-desc">
+            खेत में climate-smart practices शुरू करें: AWD सिंचाई, पराली से biochar बनाना, मेड़ पर पेड़ लगाना, या biogas plant।
+            यह <strong>actual emission reduction या carbon storage</strong> है — credits की नींव यहीं से शुरू होती है।
+          </div>
+        </div>
+      </div>
+      <div class="pathway-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">
+            MRV Data Record करें
+            <span class="step-badge tool">Agri Monitor MRV Module</span>
+          </div>
+          <div class="step-desc">
+            Field records, GPS photos, soil sample results, irrigation logs — सब कुछ <strong>Climate Actions MRV Module</strong> में document करें।
+            यह data Layer 1 (Field) + Layer 2 (Evidence) + Layer 3 (Computation) के अनुसार organized होता है।
+          </div>
+        </div>
+      </div>
+      <div class="pathway-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">
+            CLF / SHG Aggregation में जुड़ें
+            <span class="step-badge who">CLF Federation / NRLM</span>
+          </div>
+          <div class="step-desc">
+            अकेले farmer का carbon बहुत कम होता है (1–3 tCO₂e/year)। इसलिए <strong>50–200 farmers</strong> को एक CLF group में aggregate किया जाता है।
+            Group का combined carbon (100–500 tCO₂e) एक viable project बनता है।
+          </div>
+        </div>
+      </div>
+      <div class="pathway-step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">
+            Project Developer के साथ Agreement
+            <span class="step-badge who">NABARD / NGO / NBFC</span>
+          </div>
+          <div class="step-desc">
+            Project Developer (aggregator) आपके group का data लेकर <strong>CCTS registry / Verra / Gold Standard</strong> पर project register करता है।
+            Revenue sharing agreement होता है — typically <strong>60–80% income किसान को</strong> मिलती है।
+          </div>
+        </div>
+      </div>
+      <div class="pathway-step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">
+            Third-party Verification
+            <span class="step-badge action">VVB (Validation/Verification Body)</span>
+          </div>
+          <div class="step-desc">
+            Accredited VVB (जैसे SGS, Bureau Veritas, DNV) field visit करके MRV data verify करती है।
+            Agri Monitor का documented MRV data verification process को आसान बनाता है।
+          </div>
+        </div>
+      </div>
+      <div class="pathway-step">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <div class="step-title">
+            Credits Issue और Sale
+            <span class="step-badge action">💰 Income Farmer को</span>
+          </div>
+          <div class="step-desc">
+            Credits registry में issue होती हैं → Market पर बिकती हैं (Compliance entities खरीदती हैं)।
+            किसान को <strong>direct bank transfer</strong> — आधार-linked account में।
+            Typical income: <strong>₹800–₹2,500 per tCO₂e</strong> (standard के अनुसार)।
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== AGGREGATION MODEL ====================== -->
+  <section class="section" id="sec-aggregation">
+    <div class="section-header">
+      <span class="section-icon">🤝</span>
+      <div>
+        <div class="section-title">Agriculture-Linked Aggregation Model</div>
+        <div class="section-sub">CLF/SHG groups के ज़रिए carbon credits — future pathway</div>
+      </div>
+    </div>
+
+    <div class="agg-diagram">
+      <div class="agg-title">🌿 Farmer → Credit → Income — Flow Diagram</div>
+
+      <!-- Row 1: Farmers -->
+      <div class="agg-row">
+        <div class="agg-box farmer">👨‍🌾 Farmer 1<br><small>MRV Data</small></div>
+        <div class="agg-box farmer">👩‍🌾 Farmer 2<br><small>MRV Data</small></div>
+        <div class="agg-box farmer">👨‍🌾 Farmer 3<br><small>MRV Data</small></div>
+        <div class="agg-box farmer">+ अन्य<br><small>50–200 Farmers</small></div>
+      </div>
+      <div class="agg-row"><div class="agg-arrow">↓</div></div>
+      <div class="agg-label">CLF / SHG Federation में Aggregation</div>
+
+      <!-- Row 2: CLF -->
+      <div class="agg-row">
+        <div class="agg-box clf">👥 CLF / SHG Group<br><small>Combined Carbon Pool</small></div>
+      </div>
+      <div class="agg-row"><div class="agg-arrow">↓</div></div>
+      <div class="agg-label">Project Developer (NABARD / NGO / NBFC) project register करता है</div>
+
+      <!-- Row 3: Project -->
+      <div class="agg-row">
+        <div class="agg-box project">📋 Carbon Project<br><small>CCTS / Verra / GS registered</small></div>
+      </div>
+      <div class="agg-row"><div class="agg-arrow">↓</div></div>
+      <div class="agg-label">VVB Verification → Registry Issuance</div>
+
+      <!-- Row 4: Credits -->
+      <div class="agg-row">
+        <div class="agg-box registry">🏦 Credits Issued<br><small>Indian Carbon Market (ICM)</small></div>
+        <div class="agg-arrow">→</div>
+        <div class="agg-box credit">💰 Income Distribution<br><small>60–80% किसान को</small></div>
+      </div>
+    </div>
+
+    <div class="alert green">
+      <span class="alert-icon">🌾</span>
+      <div class="alert-body">
+        <div class="alert-title">Agri Monitor का Role इस Model में</div>
+        <div class="alert-text">
+          Agri Monitor का <strong>Climate Actions MRV Module + Farmer Database + GPS mapping</strong> इस aggregation model की backbone है।
+          Field-level data automatically organized होता है → Project Developer को audit-ready report मिलती है →
+          Verification process faster और cheaper होती है।
+        </div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <p>
+        इस model को <strong>आगे extend करने की योजना</strong> है:
+        NABARD के साथ partnership → CLF groups को Project Developer के रूप में register करना →
+        NCDEX Carbon Exchange पर trading → किसानों के bank accounts में direct income।
+        यह model Uttarakhand के पहाड़ी CLF groups के लिए विशेष रूप से suitable है
+        क्योंकि यहाँ agroforestry + biochar + AWD तीनों practices पहले से मौजूद हैं।
+      </p>
+    </div>
+  </section>
+
+  <!-- ====================== INCOME ESTIMATE ====================== -->
+  <section class="section" id="sec-income">
+    <div class="section-header">
+      <span class="section-icon">💰</span>
+      <div>
+        <div class="section-title">Income Estimate — Per Farmer / Per Year</div>
+        <div class="section-sub">Voluntary Market के अनुसार indicative आय — actual value project और standard पर depend करती है</div>
+      </div>
+    </div>
+
+    <div class="info-card" style="padding:0;overflow:hidden;">
+      <table class="income-table">
+        <thead>
+          <tr>
+            <th>Practice</th>
+            <th>Carbon / year</th>
+            <th>India CCTS (₹800–2000)</th>
+            <th>Verra VCS ($6–15)</th>
+            <th>Gold Standard ($15–30)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>💧 AWD (0.5 ha paddy)</strong></td>
+            <td>0.8–1.5 tCO₂e</td>
+            <td class="td-green">₹640–3,000</td>
+            <td>₹400–1,875</td>
+            <td>₹1,000–3,750</td>
+          </tr>
+          <tr>
+            <td><strong>🔥 Biochar (200kg/season)</strong></td>
+            <td>0.4–0.6 tCO₂e</td>
+            <td class="td-green">₹320–1,200</td>
+            <td>₹200–750</td>
+            <td>₹500–1,500</td>
+          </tr>
+          <tr>
+            <td><strong>🌳 Agroforestry (30 trees)</strong></td>
+            <td>1.0–2.5 tCO₂e</td>
+            <td class="td-green">₹800–5,000</td>
+            <td>₹500–3,125</td>
+            <td>₹1,250–6,250</td>
+          </tr>
+          <tr>
+            <td><strong>🐄 Biogas Plant</strong></td>
+            <td>1.5–3.0 tCO₂e</td>
+            <td class="td-green">₹1,200–6,000</td>
+            <td>₹750–3,750</td>
+            <td>₹1,875–7,500</td>
+          </tr>
+          <tr>
+            <td><strong>🌿 SOC Enhancement</strong></td>
+            <td>0.3–0.8 tCO₂e</td>
+            <td class="td-green">₹240–1,600</td>
+            <td>₹150–1,000</td>
+            <td>₹375–2,000</td>
+          </tr>
+          <tr>
+            <td><strong>📊 Total (All Practices)</strong></td>
+            <td class="td-yellow">4.0–8.4 tCO₂e</td>
+            <td class="td-green">₹3,200–16,800</td>
+            <td>₹2,000–10,500</td>
+            <td>₹5,000–21,000</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert yellow">
+      <span class="alert-icon">⚠️</span>
+      <div class="alert-body">
+        <div class="alert-title">ये सभी अनुमान Indicative Only हैं</div>
+        <div class="alert-text">
+          Actual income project registration costs, verification fees, aggregator commission, और market price fluctuations पर depend करती है।
+          Typical <strong>transaction costs: 20–40%</strong> (verification + registry + developer fee)।
+          Net farmer income = Gross credit value − Transaction costs − Aggregator commission।
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== ROADMAP ====================== -->
+  <section class="section" id="sec-roadmap">
+    <div class="section-header">
+      <span class="section-icon">🗺️</span>
+      <div>
+        <div class="section-title">India Carbon Market Roadmap</div>
+        <div class="section-sub">Agriculture sector के लिए timeline</div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-dot done"></div>
+          <div class="timeline-date">Dec 2022</div>
+          <div class="timeline-title">Energy Conservation Act Amendment</div>
+          <div class="timeline-desc">CCTS की legal foundation — Carbon Credit Trading Scheme officially authorized।</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot done"></div>
+          <div class="timeline-date">2023</div>
+          <div class="timeline-title">CCTS Framework Notification</div>
+          <div class="timeline-desc">BEE ने CCTS rules notify किए। Compliance Segment के लिए 9 industrial sectors identified।</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot done"></div>
+          <div class="timeline-date">2024</div>
+          <div class="timeline-title">Pilot Phase — Obligated Entities</div>
+          <div class="timeline-desc">Steel, Cement, Pulp & Paper, Chlor-Alkali, Fertilizer sectors में pilot। Offset methodology development शुरू।</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot active"></div>
+          <div class="timeline-date">June 2026 ★ NOW</div>
+          <div class="timeline-title">India-Japan JCM Rules Adopted</div>
+          <div class="timeline-desc">India-Japan Joint Crediting Mechanism officially active। Technology-driven projects के लिए bilateral credits शुरू।</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot future"></div>
+          <div class="timeline-date">2026–27 (Expected)</div>
+          <div class="timeline-title">Agriculture Offset Methodology</div>
+          <div class="timeline-desc">MoAFW + BEE + NABARD: AWD, Biochar, Agroforestry, SOC के लिए CCTS offset methodology finalize होगी।</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot future"></div>
+          <div class="timeline-date">2027–28 (Expected)</div>
+          <div class="timeline-title">CLF Aggregation Pilot</div>
+          <div class="timeline-desc">NRLM / NABARD के through SHG/CLF groups का pilot carbon project — Jharkhand, Uttarakhand, MP में likely।</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot future"></div>
+          <div class="timeline-date">2028+ (Future)</div>
+          <div class="timeline-title">Scale Up — Farmer Income</div>
+          <div class="timeline-desc">Agricultural carbon market mature → किसानों को direct carbon income। Agri Monitor जैसे MRV tools mandatory होंगे।</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== GLOSSARY ====================== -->
+  <section class="section" id="sec-glossary">
+    <div class="section-header">
+      <span class="section-icon">📖</span>
+      <div>
+        <div class="section-title">Glossary — ज़रूरी शब्द</div>
+        <div class="section-sub">Carbon market की key terms हिंदी में</div>
+      </div>
+    </div>
+    <div class="glossary">
+      <div class="glossary-item">
+        <div class="glossary-term">CCTS</div>
+        <div class="glossary-def">Carbon Credit Trading Scheme — India का राष्ट्रीय कार्बन बाज़ार framework (BEE managed)</div>
+      </div>
+      <div class="glossary-item">
+        <div class="glossary-term">CCU (Carbon Credit Unit)</div>
+        <div class="glossary-def">1 CCU = 1 tonne CO₂ equivalent emission reduction — market पर trade होती है</div>
+      </div>
+      <div class="glossary-item">
+        <div class="glossary-term">Compliance Segment</div>
+        <div class="glossary-def">अनिवार्य बाज़ार — केवल large industrial entities (Obligated Entities) के लिए</div>
+      </div>
+      <div class="glossary-item">
+        <div class="glossary-term">Voluntary / Offset Market</div>
+        <div class="glossary-def">वैकल्पिक बाज़ार — agriculture, forestry, waste sectors के लिए, CLF groups eligible</div>
+      </div>
+      <div class="glossary-item">
+        <div class="glossary-term">MRV</div>
+        <div class="glossary-def">Measurement, Reporting & Verification — carbon data को auditable बनाने की प्रक्रिया</div>
+      </div>
+      <div class="glossary-item">
+        <div class="glossary-term">VVB</div>
+        <div class="glossary-def">Validation/Verification Body — accredited third-party जो MRV data को independently verify करती है</div>
+      </div>
+      <div class="glossary-item">
+        <div class="glossary-term">Aggregator / Project Developer</div>
+        <div class="glossary-def">NABARD / NGO / NBFC — multiple farmers के carbon को pool करके market में register करता है</div>
+      </div>
+      <div class="glossary-item">
+        <div class="glossary-term">Verra VCS</div>
+        <div class="glossary-def">Verified Carbon Standard — global voluntary market का सबसे बड़ा standard (VM0042 agriculture ke liye)</div>
+      </div>
+      <div class="glossary-item">
+        <div class="glossary-term">Gold Standard (GS4GG)</div>
+        <div class="glossary-def">Premium voluntary standard — SDG co-benefits के साथ higher price, stricter requirements</div>
+      </div>
+      <div class="glossary-item">
+        <div class="glossary-term">JCM</div>
+        <div class="glossary-def">Joint Crediting Mechanism — Japan-India bilateral carbon credit mechanism (June 2026 active)</div>
+      </div>
+      <div class="glossary-item">
+        <div class="glossary-term">Permanence Buffer</div>
+        <div class="glossary-def">Credit का एक हिस्सा reserve में रखा जाता है — अगर project reverse हो (जैसे पेड़ कटें) तो cover के लिए</div>
+      </div>
+      <div class="glossary-item">
+        <div class="glossary-term">Additionality</div>
+        <div class="glossary-def">Project के बिना emission reduction नहीं होती — यह prove करना ज़रूरी है credits पाने के लिए</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta-bar">
+    <div class="cta-icon">🌿</div>
+    <div class="cta-text">
+      <div class="cta-title">अभी शुरू करें — MRV Data track करें</div>
+      <div class="cta-desc">Agri Monitor के Climate Actions MRV Module में अभी से field data record करना शुरू करें। जब Agriculture offset methodology आए, आपका data ready होगा।</div>
+    </div>
+    <div class="cta-btns">
+      <a href="climate-activities.html" class="btn-primary">🌿 MRV Module खोलें</a>
+      <a href="carbon_calculator.html" class="btn-outline">🌱 Carbon Calculator</a>
+    </div>
+  </div>
+
+</main>
+
+<script>
+/* THEME */
+const btn = document.getElementById('btn-theme');
+const saved = localStorage.getItem('agriTheme')||'dark';
+document.documentElement.setAttribute('data-theme', saved);
+btn.textContent = saved==='dark'?'☀️':'🌙';
+btn.addEventListener('click',()=>{
+  const c = document.documentElement.getAttribute('data-theme');
+  const n = c==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme', n);
+  localStorage.setItem('agriTheme', n);
+  btn.textContent = n==='dark'?'☀️':'🌙';
+});
+
+/* SMOOTH SCROLL */
+function scrollTo(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+/* ACTIVE NAV on scroll */
+const sections = ['sec-what','sec-compare','sec-projects','sec-pathway','sec-aggregation','sec-income','sec-roadmap','sec-glossary'];
+const navBtns  = document.querySelectorAll('.nav-btn');
+window.addEventListener('scroll', ()=>{
+  let current = '';
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && window.scrollY >= el.offsetTop - 120) current = id;
+  });
+  navBtns.forEach((b, i) => {
+    b.classList.toggle('active', sections[i] === current);
+  });
+}, { passive:true });
+</script>
+</body>
+</html>
