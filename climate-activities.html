@@ -1090,15 +1090,18 @@
       <div class="records-header-left">
         <span class="records-title">📋 MRV Records (हाल के)</span>
         <span class="records-count" id="records-total-count">0 records</span>
+        <span style="font-size:9px;padding:1px 7px;border-radius:8px;background:rgba(59,130,246,0.12);color:var(--blue);font-weight:600;">📊 Demo data included</span>
       </div>
-      <div class="records-filter">
-        <select id="records-filter-activity">
+      <div style="display:flex;gap:6px;align-items:center;">
+        <select id="records-filter-activity" style="padding:4px 8px;font-size:11px;border-radius:6px;">
           <option value="all">सभी</option>
           <option value="awd">AWD</option>
           <option value="soc">SOC</option>
           <option value="biochar">Biochar</option>
           <option value="agro">Agroforestry</option>
         </select>
+        <button onclick="reloadDemo()" title="Example records reload करें" style="padding:4px 10px;border-radius:6px;font-size:10px;font-weight:600;color:var(--teal);background:rgba(20,184,166,0.1);border:1px solid rgba(20,184,166,0.25);cursor:pointer;">🔄 Demo Reset</button>
+        <button onclick="clearDemoData()" title="सभी records हटाएं" style="padding:4px 10px;border-radius:6px;font-size:10px;font-weight:600;color:var(--red);background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);cursor:pointer;">🗑️ Clear All</button>
       </div>
     </div>
     <div class="table-scroll">
@@ -1549,8 +1552,136 @@ function set(id,val,unit){
 function setDash(id){ const el=document.getElementById(id); if(el) el.innerHTML='—'; }
 function today(){ return new Date().toISOString().slice(0,10); }
 
+/* ---- DEMO DATA ---- */
+const DEMO_RECORDS = [
+  // AWD — 3 farmers
+  {
+    activity:'awd', id:'AWD-UKM-001', farmer:'रामप्रसाद नेगी',
+    main_value:'Area: 0.40ha | Season: 115d | AWD: 55d',
+    estimate:'↓91.8 kg CH₄ (2294 kg CO₂e)',
+    formula:'(EF_base−EF_awd) × Area × Days',
+    est_methane:91.8, est_co2eq:2294,
+    date:'2025-06-15', saved_at:'2025-06-15T08:30:00Z'
+  },
+  {
+    activity:'awd', id:'AWD-UKM-002', farmer:'सुनीता देवी',
+    main_value:'Area: 0.27ha | Season: 110d | AWD: 50d',
+    estimate:'↓62.0 kg CH₄ (1549 kg CO₂e)',
+    formula:'(EF_base−EF_awd) × Area × Days',
+    est_methane:62.0, est_co2eq:1549,
+    date:'2025-06-18', saved_at:'2025-06-18T09:15:00Z'
+  },
+  {
+    activity:'awd', id:'AWD-JKL-001', farmer:'हरिदत्त बिष्ट',
+    main_value:'Area: 0.53ha | Season: 120d | AWD: 65d',
+    estimate:'↓122.4 kg CH₄ (3060 kg CO₂e)',
+    formula:'(EF_base−EF_awd) × Area × Days',
+    est_methane:122.4, est_co2eq:3060,
+    date:'2025-06-20', saved_at:'2025-06-20T07:45:00Z'
+  },
+  // SOC — 3 farmers
+  {
+    activity:'soc', id:'SOC-UKM-001', farmer:'गंगा देवी',
+    main_value:'SOC: 1.20% @ 0–10cm | BD: 1.20 g/cm³',
+    estimate:'Stock ≈ 14.40 t C/ha (0–10cm layer)',
+    formula:'SOC × BD × depth × 100',
+    date:'2025-05-10', saved_at:'2025-05-10T10:00:00Z'
+  },
+  {
+    activity:'soc', id:'SOC-UKM-002', farmer:'दीपक रावत',
+    main_value:'SOC: 0.95% @ 0–10cm | BD: 1.25 g/cm³',
+    estimate:'Stock ≈ 11.88 t C/ha (0–10cm layer)',
+    formula:'SOC × BD × depth × 100',
+    date:'2025-05-14', saved_at:'2025-05-14T11:00:00Z'
+  },
+  {
+    activity:'soc', id:'SOC-AGM-001', farmer:'पार्वती जोशी',
+    main_value:'SOC: 1.45% @ 0–10cm | BD: 1.15 g/cm³',
+    estimate:'Stock ≈ 16.68 t C/ha (0–10cm layer)',
+    formula:'SOC × BD × depth × 100',
+    date:'2025-05-20', saved_at:'2025-05-20T09:30:00Z'
+  },
+  // Biochar — 3 farmers
+  {
+    activity:'biochar', id:'BC-UKM-001', farmer:'मोहन सिंह',
+    main_value:'250kg Biochar | पराली (Rice Straw) | C_frac: 0.50',
+    estimate:'125.0 kg C (458.8 kg CO₂e)',
+    formula:'C = 250 × 0.50',
+    est_carbon:125.0, est_co2eq:458.8,
+    gps:'30.4827, 79.0183',
+    date:'2025-04-05', saved_at:'2025-04-05T08:00:00Z'
+  },
+  {
+    activity:'biochar', id:'BC-UKM-002', farmer:'लक्ष्मी नेगी',
+    main_value:'180kg Biochar | गेहूं भूसा | C_frac: 0.50',
+    estimate:'90.0 kg C (330.3 kg CO₂e)',
+    formula:'C = 180 × 0.50',
+    est_carbon:90.0, est_co2eq:330.3,
+    gps:'30.4912, 79.0251',
+    date:'2025-04-12', saved_at:'2025-04-12T09:20:00Z'
+  },
+  {
+    activity:'biochar', id:'BC-JKL-001', farmer:'विजयपाल',
+    main_value:'320kg Biochar | लकड़ी/टहनियाँ | C_frac: 0.62 (lab)',
+    estimate:'198.4 kg C (728.1 kg CO₂e)',
+    formula:'C = 320 × 0.62 (lab-tested)',
+    est_carbon:198.4, est_co2eq:728.1,
+    gps:'30.5104, 79.0087',
+    date:'2025-04-18', saved_at:'2025-04-18T10:45:00Z'
+  },
+  // Agroforestry — 3 farmers
+  {
+    activity:'agro', id:'AGR-UKM-001', farmer:'भगवती प्रसाद',
+    main_value:'45 trees | अखरोट (Walnut) | DBH: 4.5cm',
+    estimate:'Survival: 93% | ~1240 kg CO₂/yr',
+    formula:'AGB=0.099×DBH^2.56×0.47',
+    planted:45, surviving:42,
+    date:'2024-07-10', saved_at:'2024-07-10T08:00:00Z'
+  },
+  {
+    activity:'agro', id:'AGR-UKM-002', farmer:'कमला देवी',
+    main_value:'60 trees | आंवला | DBH: 3.2cm',
+    estimate:'Survival: 88% | ~680 kg CO₂/yr',
+    formula:'AGB=0.065×DBH^2.30×0.47',
+    planted:60, surviving:53,
+    date:'2024-07-15', saved_at:'2024-07-15T09:10:00Z'
+  },
+  {
+    activity:'agro', id:'AGR-AGM-001', farmer:'नरेन्द्र सिंह',
+    main_value:'30 trees | सेब (Apple) | DBH: 5.8cm',
+    estimate:'Survival: 100% | ~940 kg CO₂/yr',
+    formula:'AGB=0.076×DBH^2.42×0.47',
+    planted:30, surviving:30,
+    date:'2024-08-01', saved_at:'2024-08-01T07:30:00Z'
+  }
+];
+
+function seedDemoData(){
+  const existing = load();
+  if(existing.length === 0){
+    save(DEMO_RECORDS);
+    updateKPIs();
+    renderTable('all');
+  }
+}
+
+function clearDemoData(){
+  if(confirm('सभी records हटाएं और fresh start करें?')){
+    localStorage.removeItem(STORE);
+    updateKPIs(); renderTable('all');
+    toast('सभी records साफ हो गए — fresh start!');
+  }
+}
+
+function reloadDemo(){
+  save(DEMO_RECORDS);
+  updateKPIs(); renderTable('all');
+  toast('Demo data reload हो गया — 12 example records!');
+}
+
 /* ---- INIT ---- */
 document.addEventListener('DOMContentLoaded',()=>{
+  seedDemoData();
   updateKPIs(); renderTable('all');
   const t=today();
   ['awd-transplant-date','awd-harvest-date','soc-sample-date','bc-date','bc-application-date','agro-planting-date'].forEach(id=>{
