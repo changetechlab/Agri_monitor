@@ -297,7 +297,16 @@ window.AgriApp = (() => {
       all:          [30.3985, 79.0561],
       Ukhimath:     [30.4855, 79.2437],
       Jakholi:      [30.3267, 79.0978],
-      Augustyamuni: [30.3820, 79.0567]
+      Augustyamuni: [30.3820, 79.0567],
+      Pratapnagar:  [30.4500, 78.4800],
+      Kirtinagar:   [30.2200, 78.7600],
+      Jaunpur:      [30.5500, 78.1600],
+      Jhakhanidhar: [30.3300, 78.5800],
+      Bhilangana:   [30.4800, 78.6800],
+      Narendranagar:[30.1600, 78.2900],
+      Thauldhar:    [30.4500, 78.3300],
+      Devprayag:    [30.1400, 78.5900],
+      Chamba:       [30.3500, 78.3900]
     };
 
     sel.addEventListener('change', () => {
