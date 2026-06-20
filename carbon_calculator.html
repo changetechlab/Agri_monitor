@@ -67,6 +67,42 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f0;color:#1a2e1a;mi
 .footer-note{font-size:11px;color:#6a8c6a;text-align:center;margin-top:8px;line-height:1.6}
 .area-display{font-size:12px;background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:6px 10px;margin-top:6px;color:#5a4a00;font-weight:600}
 
+/* Credit Standards Comparison */
+.std-section{margin-top:18px;border-top:2px dashed #c8e6c9;padding-top:16px;}
+.std-section-title{font-size:12px;font-weight:700;color:#1a5c2a;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.std-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+@media(max-width:540px){.std-grid{grid-template-columns:1fr;}}
+.std-card{border-radius:10px;padding:13px 14px;position:relative;overflow:hidden;}
+.std-card.vcs{background:#e8f5e9;border:1.5px solid #a5d6a7;}
+.std-card.ccts{background:#fff8e1;border:1.5px solid #ffe082;}
+.std-card.gs{background:#fce4ec;border:1.5px solid #f48fb1;}
+.std-card.jcm{background:#e3f2fd;border:1.5px dashed #90caf9;opacity:0.85;}
+.std-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.std-name{font-size:12px;font-weight:700;}
+.std-card.vcs  .std-name{color:#1b5e20;}
+.std-card.ccts .std-name{color:#e65100;}
+.std-card.gs   .std-name{color:#880e4f;}
+.std-card.jcm  .std-name{color:#1565c0;}
+.std-badge{font-size:9px;padding:2px 8px;border-radius:8px;font-weight:700;}
+.std-card.vcs  .std-badge{background:#c8e6c9;color:#1b5e20;}
+.std-card.ccts .std-badge{background:#ffe082;color:#e65100;}
+.std-card.gs   .std-badge{background:#f8bbd0;color:#880e4f;}
+.std-card.jcm  .std-badge{background:#bbdefb;color:#1565c0;}
+.std-credits{font-size:22px;font-weight:800;line-height:1;font-family:'Segoe UI',sans-serif;margin-bottom:3px;}
+.std-card.vcs  .std-credits{color:#2e7d32;}
+.std-card.ccts .std-credits{color:#e65100;}
+.std-card.gs   .std-credits{color:#c2185b;}
+.std-card.jcm  .std-credits{color:#1976d2;}
+.std-income{font-size:12px;font-weight:600;margin-bottom:4px;}
+.std-card.vcs  .std-income{color:#388e3c;}
+.std-card.ccts .std-income{color:#f57c00;}
+.std-card.gs   .std-income{color:#e91e63;}
+.std-card.jcm  .std-income{color:#1976d2;}
+.std-detail{font-size:10px;color:#5a7a5a;line-height:1.5;}
+.std-card.jcm  .std-detail{color:#546e7a;}
+.std-methodology{font-size:10px;font-style:italic;color:#6a8c6a;margin-top:5px;}
+.std-card.jcm  .std-methodology{color:#78909c;}
+
 @media print{
   body{background:#fff}
   .no-print{display:none!important}
@@ -250,6 +286,78 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f0;color:#1a2e1a;mi
       <tbody id="r_table"></tbody>
     </table>
 
+    <!-- CREDIT STANDARDS COMPARISON -->
+    <div class="std-section">
+      <div class="std-section-title">
+        📜 Carbon Credit Standards — Estimated Income Comparison
+        <span style="font-size:9px;background:#fff3e0;color:#e65100;border-radius:8px;padding:2px 8px;font-weight:600;">⚠️ Indicative Only</span>
+      </div>
+      <div class="std-grid">
+
+        <!-- Verra VCS -->
+        <div class="std-card vcs">
+          <div class="std-card-top">
+            <span class="std-name">🌿 Verra VCS</span>
+            <span class="std-badge">✅ Active</span>
+          </div>
+          <div class="std-credits" id="std-vcs-credits">—</div>
+          <div style="font-size:10px;color:#4a7a4a;margin-bottom:6px;">Credits (tCO₂e)</div>
+          <div class="std-income" id="std-vcs-income">—</div>
+          <div class="std-detail">VM0042 (Improved Agri Land Mgmt) — Verra Verified Carbon Standard. Global voluntary market.</div>
+          <div class="std-methodology">Price range: $6–15/tCO₂e (₹500–1,250)</div>
+        </div>
+
+        <!-- India CCTS -->
+        <div class="std-card ccts">
+          <div class="std-card-top">
+            <span class="std-name">🇮🇳 India CCTS</span>
+            <span class="std-badge">✅ Active</span>
+          </div>
+          <div class="std-credits" id="std-ccts-credits">—</div>
+          <div style="font-size:10px;color:#bf360c;margin-bottom:6px;">Credits (tCO₂e)</div>
+          <div class="std-income" id="std-ccts-income">—</div>
+          <div class="std-detail">BEE Carbon Credit Trading Scheme — India domestic market. Agriculture sector eligible. INR-denominated.</div>
+          <div class="std-methodology">Price range: ₹800–2,000/tCO₂e (BEE regulated)</div>
+        </div>
+
+        <!-- Gold Standard -->
+        <div class="std-card gs">
+          <div class="std-card-top">
+            <span class="std-name">⭐ Gold Standard</span>
+            <span class="std-badge">✅ Active</span>
+          </div>
+          <div class="std-credits" id="std-gs-credits">—</div>
+          <div style="font-size:10px;color:#ad1457;margin-bottom:6px;">Credits (tCO₂e)</div>
+          <div class="std-income" id="std-gs-income">—</div>
+          <div class="std-detail">GS4GG Agriculture — co-benefit multiplier (SDG + biodiversity). Premium voluntary market.</div>
+          <div class="std-methodology">Price range: $15–30/tCO₂e (₹1,250–2,500) — premium pricing</div>
+        </div>
+
+        <!-- JCM Coming Soon -->
+        <div class="std-card jcm">
+          <div class="std-card-top">
+            <span class="std-name">🇯🇵 JCM (Japan-India)</span>
+            <span class="std-badge">🚧 Coming Soon</span>
+          </div>
+          <div class="std-credits" style="font-size:18px;color:#1976d2;">—</div>
+          <div style="font-size:10px;color:#546e7a;margin-bottom:6px;">Methodology Pending</div>
+          <div style="font-size:12px;font-weight:600;color:#1976d2;">Rules Adopted: June 2026</div>
+          <div class="std-detail">Joint Crediting Mechanism — India-Japan bilateral. AWD, SOC, Biochar, Agroforestry modules under development. Japanese entity required.</div>
+          <div class="std-methodology">Ref: AMS-III.AU, VM0042, AR-ACM0003 (adaptations)</div>
+        </div>
+
+      </div>
+
+      <!-- Comparison note -->
+      <div style="background:#f1f8f1;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:11px;color:#4a6a4a;line-height:1.7;">
+        <strong>📌 सही Standard कैसे चुनें?</strong><br>
+        🌿 <b>Verra VCS</b> — अगर international voluntary market में credits बेचने हों &nbsp;|
+        🇮🇳 <b>India CCTS</b> — domestic INR market, BEE registered, सबसे accessible &nbsp;|
+        ⭐ <b>Gold Standard</b> — premium price चाहिए और SDG co-benefits document हों &nbsp;|
+        🇯🇵 <b>JCM</b> — Japanese partner available हो और technology-driven project हो
+      </div>
+    </div>
+
     <div class="footer-note" style="margin-top:12px">
       Method: Simplified Stock-Difference | 1 Credit = 1 tCO₂e | Price: ₹<span id="r_price_note"></span>/credit<br>
       Report generated by <b>CHANGE TechLab</b> | changetechlab@gmail.com | Date: <span id="r_date"></span>
@@ -262,6 +370,88 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f0;color:#1a2e1a;mi
   </div>
 </div>
 
+</div>
+
+<!-- JCM COMING SOON BANNER -->
+<div style="max-width:860px;margin:0 auto 0;padding:0 16px 24px;" class="no-print">
+  <div style="background:linear-gradient(135deg,#0d1f3c,#1a3a5c);border:1px solid rgba(59,130,246,0.3);border-radius:14px;overflow:hidden;">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(90deg,rgba(59,130,246,0.2),rgba(99,179,237,0.1));padding:14px 20px;border-bottom:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:22px;">🇯🇵</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#93c5fd;">JCM — Joint Crediting Mechanism</div>
+          <div style="font-size:11px;color:#64748b;margin-top:1px;">Japan–India Bilateral Carbon Credit Framework | Paris Agreement Art. 6.2</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:10px;padding:3px 10px;border-radius:10px;background:rgba(245,158,11,0.15);color:#fbbf24;font-weight:700;border:1px solid rgba(245,158,11,0.3);letter-spacing:0.5px;">🚧 COMING SOON</span>
+        <span style="font-size:10px;padding:3px 10px;border-radius:10px;background:rgba(34,197,94,0.1);color:#4ade80;font-weight:600;border:1px solid rgba(34,197,94,0.2);">Rules Adopted: June 2026</span>
+      </div>
+    </div>
+
+    <div style="padding:18px 20px;">
+
+      <!-- Info Row -->
+      <p style="font-size:12px;color:#94a3b8;line-height:1.7;margin-bottom:16px;">
+        JCM एक bilateral mechanism है जिसमें <strong style="color:#93c5fd;">Japan और India मिलकर</strong> low-carbon technology projects से carbon credits generate करते हैं।
+        June 2026 में India-Japan JCM Rules officially adopt हुए। इस calculator में JCM-specific credit calculation जल्द जोड़ी जाएगी।
+      </p>
+
+      <!-- 4 Module Cards -->
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;">
+
+        <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:700;color:#93c5fd;">💧 AWD</span>
+            <span style="font-size:9px;padding:2px 7px;border-radius:8px;background:rgba(245,158,11,0.15);color:#fbbf24;font-weight:600;">Coming Soon</span>
+          </div>
+          <div style="font-size:11px;color:#64748b;line-height:1.5;">Alternate Wetting & Drying — Paddy methane reduction credits under JCM methodology</div>
+          <div style="font-size:10px;color:#475569;margin-top:6px;font-style:italic;">Ref: AMS-III.AU (CDM-based, JCM adaptation)</div>
+        </div>
+
+        <div style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:10px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:700;color:#fb923c;">🌾 SOC</span>
+            <span style="font-size:9px;padding:2px 7px;border-radius:8px;background:rgba(245,158,11,0.15);color:#fbbf24;font-weight:600;">Coming Soon</span>
+          </div>
+          <div style="font-size:11px;color:#64748b;line-height:1.5;">Soil Organic Carbon enhancement — lab-verified stock change credits</div>
+          <div style="font-size:10px;color:#475569;margin-top:6px;font-style:italic;">Ref: VM0042 (Verra) / India CCTS Offset</div>
+        </div>
+
+        <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:700;color:#4ade80;">🔥 Biochar</span>
+            <span style="font-size:9px;padding:2px 7px;border-radius:8px;background:rgba(245,158,11,0.15);color:#fbbf24;font-weight:600;">Coming Soon</span>
+          </div>
+          <div style="font-size:11px;color:#64748b;line-height:1.5;">Biochar carbon sequestration — pyrolysis-based durable carbon storage credits</div>
+          <div style="font-size:10px;color:#475569;margin-top:6px;font-style:italic;">Ref: Puro.earth / EBC-C Standard</div>
+        </div>
+
+        <div style="background:rgba(20,184,166,0.08);border:1px solid rgba(20,184,166,0.2);border-radius:10px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:700;color:#2dd4bf;">🌳 Agroforestry</span>
+            <span style="font-size:9px;padding:2px 7px;border-radius:8px;background:rgba(245,158,11,0.15);color:#fbbf24;font-weight:600;">Coming Soon</span>
+          </div>
+          <div style="font-size:11px;color:#64748b;line-height:1.5;">Tree biomass & carbon sequestration — allometric equation-based JCM credits</div>
+          <div style="font-size:10px;color:#475569;margin-top:6px;font-style:italic;">Ref: AR-ACM0003 / ICFRE Allometric Tables</div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Info Strip -->
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 14px;display:flex;align-items:flex-start;gap:10px;">
+        <span style="font-size:16px;flex-shrink:0;margin-top:1px;">ℹ️</span>
+        <div style="font-size:11px;color:#64748b;line-height:1.6;">
+          <strong style="color:#94a3b8;">Note:</strong> JCM projects ke liye ek <strong style="color:#93c5fd;">Japanese legal entity</strong> ka involvement (as implementer ya investor) typically required hota hai.
+          India domestic credits ke liye <strong style="color:#4ade80;">India CCTS (BEE)</strong> ya <strong style="color:#4ade80;">Verra VCS</strong> abhi zyada practical options hain.
+          &nbsp;|&nbsp; <a href="climate-activities.html" style="color:#60a5fa;text-decoration:none;font-weight:600;">→ MRV Data track karein Climate Actions module mein</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
 
 <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #4a6a4a; line-height: 1.5; padding-bottom: 20px;" class="no-print">
@@ -396,6 +586,36 @@ function calculate(){
   document.getElementById('r_table').innerHTML = rows.map(r=>
     `<tr><td>${r[0]}</td><td>${r[1]}</td><td style="text-align:right">${r[2]}</td></tr>`
   ).join('');
+
+  // ---- CREDIT STANDARDS COMPARISON ----
+  // Each standard applies a methodology-specific discount/adjustment factor
+  // VCS VM0042: ~80% of gross stock eligible (permanence buffer + leakage deductions)
+  const vcsCredits   = totalCarbon * 0.80;
+  const vcsMinIncome = vcsCredits * 500;   // ₹500/tCO₂e (~$6)
+  const vcsMaxIncome = vcsCredits * 1250;  // ₹1250/tCO₂e (~$15)
+
+  // India CCTS: BEE regulated, ~90% eligible (domestic market, less buffer requirement)
+  const cctsCredits   = totalCarbon * 0.90;
+  const cctsMinIncome = cctsCredits * 800;
+  const cctsMaxIncome = cctsCredits * 2000;
+
+  // Gold Standard GS4GG: premium but stricter — ~70% of gross (SDG audit + co-benefit verification)
+  // co-benefit multiplier: organic farming +10%, agroforestry +15%
+  const gsCoBenefit   = (organic==='yes' ? 0.10 : 0) + (crop==='agroforestry' ? 0.15 : 0);
+  const gsCredits     = totalCarbon * (0.70 + gsCoBenefit);
+  const gsMinIncome   = gsCredits * 1250;  // ₹1250/tCO₂e (~$15)
+  const gsMaxIncome   = gsCredits * 2500;  // ₹2500/tCO₂e (~$30)
+
+  const fmt = n => Math.round(n).toLocaleString('en-IN');
+
+  document.getElementById('std-vcs-credits').textContent  = vcsCredits.toFixed(2);
+  document.getElementById('std-vcs-income').textContent   = `₹${fmt(vcsMinIncome)} – ₹${fmt(vcsMaxIncome)}`;
+
+  document.getElementById('std-ccts-credits').textContent = cctsCredits.toFixed(2);
+  document.getElementById('std-ccts-income').textContent  = `₹${fmt(cctsMinIncome)} – ₹${fmt(cctsMaxIncome)}`;
+
+  document.getElementById('std-gs-credits').textContent   = gsCredits.toFixed(2);
+  document.getElementById('std-gs-income').textContent    = `₹${fmt(gsMinIncome)} – ₹${fmt(gsMaxIncome)}`;
 
   document.getElementById('resultSection').classList.add('show');
   document.getElementById('resultSection').scrollIntoView({behavior:'smooth'});
