@@ -54,14 +54,17 @@ window.AgriApp = (() => {
     await loadData();
 
     // 5. Feature modules receive data slices
-    initFeatureModules();
+    await initFeatureModules();
 
     // 5b. Weather & Warning Widget
     try { AgriWeather.init(); } catch (e) { console.warn('[App] Weather init skipped:', e); }
 
     // 6. Layer system + NDVI controls
     AgriLayers.init();
-    AgriNDVI.init();
+    try {
+      await import('./ndvi.js');
+      if (window.AgriNDVI) AgriNDVI.init();
+    } catch(e) { console.warn('Failed to load ndvi.js', e); }
 
     // 7. Charts
     AgriCharts.renderAll({
@@ -134,15 +137,18 @@ window.AgriApp = (() => {
   // ═══════════════════════════════════════════════════════════
   // FEATURE MODULE INITIALIZATION
   // ═══════════════════════════════════════════════════════════
-  function initFeatureModules() {
-    if (window.AgriFarmers) {
-      AgriFarmers.init({
-        farmers:      state.farmers,
-        fields:       state.fields,
-        villages:     state.villages,
-        clf_clusters: state.clf_clusters,
-      });
-    }
+  async function initFeatureModules() {
+    try {
+      await import('./farmers.js');
+      if (window.AgriFarmers) {
+        AgriFarmers.init({
+          farmers:      state.farmers,
+          fields:       state.fields,
+          villages:     state.villages,
+          clf_clusters: state.clf_clusters,
+        });
+      }
+    } catch(e) { console.warn('Failed to load farmers.js', e); }
     if (window.AgriAlerts) AgriAlerts.init(state.alerts);
     if (window.AgriCLF)    AgriCLF.init(state.clf_clusters);
     if (window.AgriUpload) AgriUpload.init();
