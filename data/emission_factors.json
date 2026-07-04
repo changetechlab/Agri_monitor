@@ -1,0 +1,116 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-07-04",
+  "source": "IPCC 2006, India BUR, JCM Japan-India",
+  "units": "tCO2e per unit",
+
+  "awd": {
+    "name": "Alternate Wetting & Drying (AWD)",
+    "description": "Paddy field methane reduction via controlled irrigation",
+    "ef_ch4_continuous": 1.30,
+    "ef_ch4_intermittent": 0.52,
+    "gwp_ch4": 28,
+    "reduction_factor": 0.45,
+    "unit": "tCH4/ha/season",
+    "source": "IPCC 2006 Table 5.11, India NATCOM",
+    "applicability": ["kharif", "rabi"],
+    "baseline_emission_factor": 0.0025,
+    "notes": "Assumes single drainage event. Adjust for soil type."
+  },
+
+  "soc": {
+    "name": "Soil Organic Carbon (SOC) Enhancement",
+    "description": "Carbon sequestration through organic matter addition",
+    "ef_per_ton_compost": 0.18,
+    "ef_per_ton_fym": 0.12,
+    "ef_per_ton_vermicompost": 0.22,
+    "sequestration_rate_ha_yr": 0.35,
+    "permanence_factor": 0.85,
+    "unit": "tCO2e/ha/year",
+    "source": "IPCC 2006 Vol.4 Ch.5, India SOC study 2019",
+    "stock_change_factor": {
+      "tropical_moist": 1.0,
+      "tropical_dry": 0.95,
+      "sub_tropical": 1.05
+    },
+    "notes": "Minimum 3-year monitoring required for permanence"
+  },
+
+  "biochar": {
+    "name": "Biochar Application",
+    "description": "Pyrogenic carbon stabilization in soil",
+    "ef_per_ton_biochar": 2.38,
+    "carbon_fraction": 0.75,
+    "stability_factor": 0.90,
+    "h_c_ratio_threshold": 0.7,
+    "unit": "tCO2e/ton biochar",
+    "source": "Verra VM0044, IBI Standard",
+    "feedstock_factors": {
+      "rice_husk": 2.1,
+      "wheat_straw": 1.9,
+      "wood_chips": 2.5,
+      "sugarcane_bagasse": 1.8,
+      "maize_cob": 2.0
+    },
+    "application_rate_ton_ha": 5.0,
+    "notes": "Requires H:C ratio < 0.7 for eligibility"
+  },
+
+  "agroforestry": {
+    "name": "Agroforestry / Tree Plantation",
+    "description": "Above and below-ground biomass sequestration",
+    "unit": "tCO2e/tree/year",
+    "source": "ICFRE Allometric Equations, FSI India",
+    "species_factors": {
+      "morus_alba": { "name": "शहतूत (Mulberry)", "seq_per_tree_yr": 0.012, "mature_carbon": 0.08 },
+      "grewia_optiva": { "name": "भीमल (Bhemal)", "seq_per_tree_yr": 0.015, "mature_carbon": 0.09 },
+      "quercus_leucotrichophora": { "name": "बाँज (Banj Oak)", "seq_per_tree_yr": 0.025, "mature_carbon": 0.25 },
+      "bauhinia_variegata": { "name": "कचनार (Kachnar)", "seq_per_tree_yr": 0.018, "mature_carbon": 0.12 },
+      "melia_azedarach": { "name": "बकायन (Bakayan)", "seq_per_tree_yr": 0.022, "mature_carbon": 0.18 },
+      "populus": { "name": "पॉपलर (Poplar)", "seq_per_tree_yr": 0.035, "mature_carbon": 0.28 },
+      "eucalyptus": { "name": "यूकेलिप्टस (Eucalyptus)", "seq_per_tree_yr": 0.030, "mature_carbon": 0.22 },
+      "other": { "name": "अन्य (Other)", "seq_per_tree_yr": 0.015, "mature_carbon": 0.10 }
+    },
+    "below_ground_ratio": 0.26,
+    "wood_density_default": 0.5,
+    "carbon_fraction": 0.47,
+    "co2_to_c": 3.6667
+  },
+
+  "compost": {
+    "name": "Compost / FYM Application",
+    "description": "Organic matter recycling, N2O avoidance",
+    "n2o_avoidance_per_ton": 0.0125,
+    "gwp_n2o": 265,
+    "soc_benefit_per_ton": 0.08,
+    "unit": "tCO2e/ton applied",
+    "source": "IPCC 2006 Vol.4, India GHG Platform"
+  },
+
+  "residue": {
+    "name": "Crop Residue Management",
+    "description": "Avoidance of residue burning emissions",
+    "ef_burning_per_ton": 0.19,
+    "ch4_factor": 0.0028,
+    "n2o_factor": 0.000014,
+    "soc_incorporation_factor": 0.12,
+    "unit": "tCO2e/ton residue",
+    "source": "IPCC 2006 Vol.4 Table 2.5, INCCA India"
+  },
+
+  "global_warming_potentials": {
+    "co2": 1,
+    "ch4": 28,
+    "n2o": 265,
+    "source": "IPCC AR5 (GWP-100)"
+  },
+
+  "carbon_price_reference": {
+    "voluntary_market_usd_per_tco2e": 15,
+    "india_ccts_inr_per_tco2e": 600,
+    "gold_standard_usd_per_tco2e": 25,
+    "jcm_japan_usd_per_tco2e": 20,
+    "currency_inr_per_usd": 83.5,
+    "last_updated": "2025-07-01"
+  }
+}

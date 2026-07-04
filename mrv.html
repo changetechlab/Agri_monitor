@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="hi" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#16a34a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>MRV Foundation — Agri Monitor | CHANGE TechLab</title>
+  <meta name="description" content="Monitoring, Reporting & Verification — JCM, Verra VCS, Gold Standard, India CCTS के लिए complete field data capture।">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Local Vendor -->
+  <link rel="stylesheet" href="./js/vendor/leaflet.min.css">
+  <link rel="stylesheet" href="./js/vendor/leaflet.draw.min.css">
+
+  <!-- MRV Styles -->
+  <link rel="stylesheet" href="./css/mrv.css">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════
+     TOPBAR
+     ══════════════════════════════════════════════════════════════ -->
+<header id="mrv-topbar">
+  <a href="./index.html" class="btn-back">← वापस</a>
+  <div class="topbar-brand">
+    <span class="icon">🌿</span>
+    <div>
+      <div class="title">MRV Foundation</div>
+      <div class="sub">Monitoring · Reporting · Verification</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span class="mrv-id-badge" id="mrv-id-display">New Record</span>
+    <button id="btn-save-draft" class="btn-save" style="padding:7px 12px;font-size:0.78rem;" title="Save Draft">💾 Save</button>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PROGRESS BAR
+     ══════════════════════════════════════════════════════════════ -->
+<div id="mrv-progress">
+  <div class="step-track" id="step-track">
+    <!-- JS generates step items -->
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+    <span class="progress-pct" id="progress-pct">0%</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     MAIN BODY
+     ══════════════════════════════════════════════════════════════ -->
+<main id="mrv-body">
+
+  <!-- ──────────────────────────────────────────────────────────
+       STEP 1 — Farmer Profile
+       ────────────────────────────────────────────────────────── -->
+  <div class="step-panel active" id="step-1" data-step="1">
+    <div class="step-header">
+      <div class="step-icon">👨‍🌾</div>
+      <div>
+        <div class="step-title">Farmer Profile</div>
+        <div class="step-subtitle">किसान की मूलभूत जानकारी — MRV record का आधार</div>
+        <span class="step-badge badge-required">Required</span>
+      </div>
+    </div>
+
+    <div class="mrv-card">
+      <div class="mrv-card-title">📋 Personal Details</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">किसान का नाम <span class="req">*</span></label>
+          <input type="text" class="form-input" id="f-name" placeholder="पूरा नाम लिखें" data-validate="required">
+        </div>
+        <div class="form-group">
+          <label class="form-label">मोबाइल नंबर <span class="req">*</span></label>
+          <input type="tel" class="form-input" id="f-mobile" placeholder="10 अंक" maxlength="10" data-validate="phone">
+        </div>
+        <div class="form-group">
+          <label class="form-label">आधार (अंतिम 4 अंक)</label>
+          <input type="text" class="form-input" id="f-aadhaar" placeholder="XXXX" maxlength="4" pattern="[0-9]{4}">
+          <span class="form-hint">पूरा नंबर न भरें — सिर्फ अंतिम 4</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">लिंग</label>
+          <select class="form-select" id="f-gender">
+            <option value="">चुनें</option>
+            <option value="male">पुरुष</option>
+            <option value="female">महिला</option>
+            <option value="other">अन्य</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">श्रेणी</label>
+          <select class="form-select" id="f-category">
+            <option value="">चुनें</option>
+            <option value="general">सामान्य</option>
+            <option value="obc">OBC</option>
+            <option value="sc">SC</option>
+            <option value="st">ST</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CLF / SHG का नाम</label>
+          <input type="text" class="form-input" id="f-clf" placeholder="जैसे: पहाड़ी CLF, उर्वरा SHG">
+        </div>
+      </div>
+    </div>
+
+    <div class="mrv-card">
+      <div class="mrv-card-title">📍 Location Details</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">जिला <span class="req">*</span></label>
+          <select class="form-select" id="f-district" data-validate="required">
+            <option value="">जिला चुनें</option>
+            <option value="rudraprayag">रुद्रप्रयाग</option>
+            <option value="tehri">टिहरी गढ़वाल</option>
+            <option value="chamoli">चमोली</option>
+            <option value="uttarkashi">उत्तरकाशी</option>
+            <option value="pauri">पौड़ी गढ़वाल</option>
+            <option value="almora">अल्मोड़ा</option>
+            <option value="pithoragarh">पिथौरागढ़</option>
+            <option value="haridwar">हरिद्वार</option>
+            <option value="dehradun">देहरादून</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ब्लॉक / तहसील <span class="req">*</span></label>
+          <select class="form-select" id="f-block" data-validate="required">
+            <option value="">पहले जिला चुनें</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">गाँव / ग्राम पंचायत <span class="req">*</span></label>
+          <input type="text" class="form-input" id="f-village" placeholder="ग्राम का नाम" data-validate="required">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ग्राम पंचायत</label>
+          <input type="text" class="form-input" id="f-gp" placeholder="GP का नाम">
+        </div>
+      </div>
+    </div>
+
+    <div class="mrv-card">
+      <div class="mrv-card-title">📡 Enumerator & GPS</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Enumerator का नाम</label>
+          <input type="text" class="form-input" id="f-enum-name" placeholder="Field officer का नाम">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Enumerator ID</label>
+          <input type="text" class="form-input" id="f-enum-id" placeholder="Staff ID">
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">Current Location (GPS)</label>
+          <div class="gps-row">
+            <input type="text" class="form-input" id="f-lat" placeholder="Latitude" readonly>
+            <input type="text" class="form-input" id="f-lng" placeholder="Longitude" readonly>
+            <button type="button" class="btn-gps" id="btn-get-gps">📡 Get GPS</button>
+          </div>
+          <span class="form-hint" id="gps-accuracy-hint"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-nav">
+      <div></div>
+      <button class="btn-next" id="s1-next">Next: Land Boundary →</button>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────────────────────
+       STEP 2 — Land / GIS Boundary
+       ────────────────────────────────────────────────────────── -->
+  <div class="step-panel" id="step-2" data-step="2">
+    <div class="step-header">
+      <div class="step-icon">🗺️</div>
+      <div>
+        <div class="step-title">Land / GIS Boundary</div>
+        <div class="step-subtitle">Leaflet map पर polygon draw करें — area auto-calculate होगा</div>
+        <span class="step-badge badge-required">Required — Primary</span>
+      </div>
+    </div>
+
+    <!-- Map Toolbar -->
+    <div class="map-toolbar">
+      <button class="map-btn" id="map-btn-draw" title="Draw polygon">✏️ Draw Polygon</button>
+      <button class="map-btn" id="map-btn-edit" title="Edit polygon">✏ Edit</button>
+      <button class="map-btn danger" id="map-btn-delete" title="Delete polygon">🗑 Delete</button>
+      <button class="map-btn" id="map-btn-locate" title="Go to my location">📡 My Location</button>
+      <button class="map-btn" id="map-btn-satellite" title="Toggle satellite">🛰 Satellite</button>
+    </div>
+
+    <!-- Map -->
+    <div id="map-container">
+      <div id="map-search-wrap">
+        <input type="text" id="map-search" placeholder="🔍 Village / location search करें..." autocomplete="off">
+        <div id="map-search-results"></div>
+      </div>
+      <div id="mrv-map"></div>
+    </div>
+
+    <!-- Area Display -->
+    <div id="area-display" style="display:none">
+      <div class="area-main" id="area-main-text">—</div>
+      <div class="area-sub"  id="area-sub-text">Draw करें area calculate होगा</div>
+    </div>
+
+    <!-- Secondary: Land Records -->
+    <div class="mrv-card" style="margin-top:16px">
+      <div class="mrv-card-title">📜 Land Records <span style="color:var(--text-muted);font-weight:400;font-size:0.75rem;">(Optional)</span></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">खसरा / Plot Number</label>
+          <input type="text" class="form-input" id="l-khasra" placeholder="जैसे: 234/1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">खाता / Khatauni No.</label>
+          <input type="text" class="form-input" id="l-khata" placeholder="खाता संख्या">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Village (Patwari Record)</label>
+          <input type="text" class="form-input" id="l-village" placeholder="राजस्व ग्राम">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tehsil</label>
+          <input type="text" class="form-input" id="l-tehsil" placeholder="तहसील">
+        </div>
+      </div>
+    </div>
+
+    <!-- Fallback: Manual Entry -->
+    <div class="fallback-section">
+      <button class="fallback-toggle" id="fallback-toggle">⚙ Manual Entry / GeoJSON Import (Fallback)</button>
+      <div class="fallback-body" id="fallback-body" style="display:none">
+        <div class="form-grid" style="margin-bottom:12px">
+          <div class="form-group">
+            <label class="form-label">Latitude (Manual)</label>
+            <input type="number" step="0.000001" class="form-input" id="l-lat-manual" placeholder="30.3985">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Longitude (Manual)</label>
+            <input type="number" step="0.000001" class="form-input" id="l-lng-manual" placeholder="79.0561">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">GeoJSON Paste / Import</label>
+          <textarea class="form-textarea geojson-paste" id="l-geojson-paste" placeholder='{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[lng,lat],[lng,lat],...]]}}'></textarea>
+          <button class="map-btn" id="btn-import-geojson" style="margin-top:6px">📥 Import GeoJSON</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-nav">
+      <button class="btn-prev" onclick="MRVWizard.goTo(1)">← Farmer Profile</button>
+      <button class="btn-next" id="s2-next">Next: Baseline Data →</button>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────────────────────
+       STEP 3 — Baseline Data
+       ────────────────────────────────────────────────────────── -->
+  <div class="step-panel" id="step-3" data-step="3">
+    <div class="step-header">
+      <div class="step-icon">🌾</div>
+      <div>
+        <div class="step-title">Baseline Data</div>
+        <div class="step-subtitle">Intervention से पहले की स्थिति — carbon calculation का reference point</div>
+        <span class="step-badge badge-required">Required</span>
+      </div>
+    </div>
+
+    <div class="mrv-card">
+      <div class="mrv-card-title">📅 Season & Crop</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Season <span class="req">*</span></label>
+          <select class="form-select" id="b-season" data-validate="required">
+            <option value="">चुनें</option>
+            <option value="kharif">Kharif (खरीफ)</option>
+            <option value="rabi">Rabi (रबी)</option>
+            <option value="zaid">Zaid (जायद)</option>
+            <option value="perennial">Perennial (बारहमासी)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Primary Crop <span class="req">*</span></label>
+          <select class="form-select" id="b-crop" data-validate="required">
+            <option value="">फसल चुनें</option>
+            <option value="paddy">धान (Paddy)</option>
+            <option value="wheat">गेहूँ (Wheat)</option>
+            <option value="maize">मक्का (Maize)</option>
+            <option value="mandua">मंडुवा (Finger Millet)</option>
+            <option value="jhangora">झंगोरा (Barnyard Millet)</option>
+            <option value="potato">आलू (Potato)</option>
+            <option value="rajma">राजमा (Kidney Bean)</option>
+            <option value="vegetables">सब्जियाँ (Vegetables)</option>
+            <option value="horticulture">बागवानी (Horticulture)</option>
+            <option value="other">अन्य (Other)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Variety / किस्म</label>
+          <input type="text" class="form-input" id="b-variety" placeholder="जैसे: VL-Dhan 65, Sahbhagi">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Baseline Year</label>
+          <input type="number" class="form-input" id="b-year" placeholder="2024" min="2015" max="2030">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sowing Date</label>
+          <input type="date" class="form-input" id="b-sow-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Harvest Date</label>
+          <input type="date" class="form-input" id="b-harvest-date">
+        </div>
+      </div>
+    </div>
+
+    <div class="mrv-card">
+      <div class="mrv-card-title">💧 Inputs & Management</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Irrigation Source</label>
+          <select class="form-select" id="b-irrigation">
+            <option value="">चुनें</option>
+            <option value="rainfed">Rainfed (वर्षाआश्रित)</option>
+            <option value="canal">Canal (नहर)</option>
+            <option value="borewell">Borewell (नलकूप)</option>
+            <option value="drip">Drip Irrigation (टपक)</option>
+            <option value="sprinkler">Sprinkler (फव्वारा)</option>
+            <option value="spring">Spring / Naula (नौला)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fertilizer Type</label>
+          <select class="form-select" id="b-fertilizer">
+            <option value="">चुनें</option>
+            <option value="none">None (बिना उर्वरक)</option>
+            <option value="organic">Organic only (जैविक)</option>
+            <option value="chemical">Chemical (रासायनिक)</option>
+            <option value="both">Both (मिश्रित)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Soil Type</label>
+          <select class="form-select" id="b-soil">
+            <option value="">चुनें</option>
+            <option value="loamy">Loamy (दोमट)</option>
+            <option value="clay">Clay (चिकनी)</option>
+            <option value="sandy">Sandy (बलुई)</option>
+            <option value="alluvial">Alluvial (जलोढ़)</option>
+            <option value="rocky">Rocky/Shallow (पथरीली)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Slope</label>
+          <select class="form-select" id="b-slope">
+            <option value="">चुनें</option>
+            <option value="flat">Flat 0–3°</option>
+            <option value="gentle">Gentle 3–8°</option>
+            <option value="moderate">Moderate 8–15°</option>
+            <option value="steep">Steep 15°+</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Baseline Yield (kg) <span class="req">*</span></label>
+          <input type="number" class="form-input" id="b-yield-kg" placeholder="जैसे: 180" min="0" data-validate="required">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Yield Unit</label>
+          <select class="form-select" id="b-yield-unit">
+            <option value="kg_bigha">kg/बीघा</option>
+            <option value="kg_ha">kg/हेक्टेयर</option>
+            <option value="quintal_bigha">क्विंटल/बीघा</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-nav">
+      <button class="btn-prev" onclick="MRVWizard.goTo(2)">← Land Boundary</button>
+      <button class="btn-next" id="s3-next">Next: Intervention →</button>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────────────────────
+       STEP 4 — Intervention
+       ────────────────────────────────────────────────────────── -->
+  <div class="step-panel" id="step-4" data-step="4">
+    <div class="step-header">
+      <div class="step-icon">🌿</div>
+      <div>
+        <div class="step-title">Carbon Interventions</div>
+        <div class="step-subtitle">जो climate-smart तरीके अपनाए जा रहे हैं उन्हें चुनें</div>
+        <span class="step-badge badge-required">कम से कम 1 चुनें</span>
+      </div>
+    </div>
+
+    <div class="intervention-grid">
+
+      <!-- AWD -->
+      <div class="intervention-card" id="card-awd">
+        <div class="intervention-header">
+          <input type="checkbox" class="intervention-checkbox" id="iv-awd" data-key="awd">
+          <span class="intervention-icon">💧</span>
+          <div>
+            <div class="intervention-name">AWD</div>
+            <div style="font-size:0.68rem;color:var(--text-muted)">Alternate Wetting & Drying</div>
+          </div>
+        </div>
+        <div class="intervention-desc">धान की खेती में पानी की बचत और CH₄ emissions में कमी</div>
+        <div class="intervention-ef">⚡ ~0.52 tCH₄/ha/season reduced</div>
+        <div class="intervention-fields">
+          <div class="form-group" style="margin-top:8px">
+            <label class="form-label" style="font-size:0.72rem">Area (ha)</label>
+            <input type="number" class="form-input" id="iv-awd-area" placeholder="0.5" step="0.01" min="0">
+          </div>
+          <div class="form-group" style="margin-top:6px">
+            <label class="form-label" style="font-size:0.72rem">Seasons</label>
+            <input type="number" class="form-input" id="iv-awd-seasons" placeholder="1" min="1" max="3">
+          </div>
+          <div class="form-group" style="margin-top:6px">
+            <label class="form-label" style="font-size:0.72rem">Drainage Events/Season</label>
+            <input type="number" class="form-input" id="iv-awd-drainage" placeholder="2" min="1" max="6">
+          </div>
+        </div>
+      </div>
+
+      <!-- SOC -->
+      <div class="intervention-card" id="card-soc">
+        <div class="intervention-header">
+          <input type="checkbox" class="intervention-checkbox" id="iv-soc" data-key="soc">
+          <span class="intervention-icon">🌱</span>
+          <div>
+            <div class="intervention-name">SOC Enhancement</div>
+            <div style="font-size:0.68rem;color:var(--text-muted)">Soil Organic Carbon</div>
+          </div>
+        </div>
+        <div class="intervention-desc">मिट्टी में जैविक कार्बन बढ़ाना — compost, FYM, vermicompost</div>
+        <div class="intervention-ef">⚡ ~0.35 tCO₂e/ha/year sequestered</div>
+        <div class="intervention-fields">
+          <div class="form-group" style="margin-top:8px">
+            <label class="form-label" style="font-size:0.72rem">Area (ha)</label>
+            <input type="number" class="form-input" id="iv-soc-area" placeholder="0.5" step="0.01">
+          </div>
+          <div class="form-group" style="margin-top:6px">
+            <label class="form-label" style="font-size:0.72rem">Compost Applied (tons)</label>
+            <input type="number" class="form-input" id="iv-soc-compost" placeholder="0" step="0.1">
+          </div>
+          <div class="form-group" style="margin-top:6px">
+            <label class="form-label" style="font-size:0.72rem">FYM Applied (tons)</label>
+            <input type="number" class="form-input" id="iv-soc-fym" placeholder="0" step="0.1">
+          </div>
+          <div class="form-group" style="margin-top:6px">
+            <label class="form-label" style="font-size:0.72rem">Vermicompost (tons)</label>
+            <input type="number" class="form-input" id="iv-soc-vermi" placeholder="0" step="0.1">
+          </div>
+        </div>
+      </div>
+
+      <!-- Biochar -->
+      <div class="intervention-card" id="card-biochar">
+        <div class="intervention-header">
+          <input type="checkbox" class="intervention-checkbox" id="iv-biochar" data-key="biochar">
+          <span class="intervention-icon">🔥</span>
+          <div>
+            <div class="intervention-name">Biochar</div>
+            <div style="font-size:0.68rem;color:var(--text-muted)">Pyrogenic Carbon</div>
+          </div>
+        </div>
+        <div class="intervention-desc">फसल अवशेष को biochar बनाकर मिट्टी में मिलाना</div>
+        <div class="intervention-ef">⚡ ~2.38 tCO₂e/ton biochar</div>
+        <div class="intervention-fields">
+          <div class="form-group" style="margin-top:8px">
+            <label class="form-label" style="font-size:0.72rem">Biochar Amount (tons)</label>
+            <input type="number" class="form-input" id="iv-biochar-tons" placeholder="0.5" step="0.01">
+          </div>
+          <div class="form-group" style="margin-top:6px">
+            <label class="form-label" style="font-size:0.72rem">Feedstock</label>
+            <select class="form-select" id="iv-biochar-feedstock" style="font-size:0.8rem">
+              <option value="rice_husk">Rice Husk</option>
+              <option value="wheat_straw">Wheat Straw</option>
+              <option value="wood_chips">Wood Chips</option>
+              <option value="maize_cob">Maize Cob</option>
+              <option value="sugarcane_bagasse">Sugarcane Bagasse</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-top:6px">
+            <label class="form-label" style="font-size:0.72rem">Pyrolysis Temp (°C)</label>
+            <input type="number" class="form-input" id="iv-biochar-temp" placeholder="550" min="300" max="900">
+          </div>
+        </div>
+      </div>
+
+      <!-- Agroforestry -->
+      <div class="intervention-card" id="card-agroforestry">
+        <div class="intervention-header">
+          <input type="checkbox" class="intervention-checkbox" id="iv-agroforestry" data-key="agroforestry">
+          <span class="intervention-icon">🌳</span>
+          <div>
+            <div class="intervention-name">Agroforestry</div>
+            <div style="font-size:0.68rem;color:var(--text-muted)">Tree Plantation</div>
+          </div>
+        </div>
+        <div class="intervention-desc">खेत की मेड़ पर या मिश्रित रूप से पेड़ लगाना</div>
+        <div class="intervention-ef">⚡ ~0.012–0.035 tCO₂e/tree/year</div>
+        <div class="intervention-fields">
+          <div class="form-group" style="margin-top:8px">
+            <label class="form-label" style="font-size:0.72rem">Tree Species</label>
+            <select class="form-select" id="iv-af-species" style="font-size:0.8rem">
+              <option value="morus_alba">शहतूत (Mulberry)</option>
+              <option value="grewia_optiva">भीमल (Bhemal)</option>
+              <option value="quercus_leucotrichophora">बाँज (Banj Oak)</option>
+              <option value="bauhinia_variegata">कचनार (Kachnar)</option>
+              <option value="populus">पॉपलर (Poplar)</option>
+              <option value="eucalyptus">यूकेलिप्टस</option>
+              <option value="other">अन्य</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-top:6px">
+            <label class="form-label" style="font-size:0.72rem">Tree Count</label>
+            <input type="number" class="form-input" id="iv-af-count" placeholder="50" min="1">
+          </div>
+          <div class="form-group" style="margin-top:6px">
+            <label class="form-label" style="font-size:0.72rem">Age (years)</label>
+            <input type="number" class="form-input" id="iv-af-age" placeholder="1" min="1" max="50">
+          </div>
+        </div>
+      </div>
+
+      <!-- Compost -->
+      <div class="intervention-card" id="card-compost">
+        <div class="intervention-header">
+          <input type="checkbox" class="intervention-checkbox" id="iv-compost" data-key="compost">
+          <span class="intervention-icon">🟤</span>
+          <div>
+            <div class="intervention-name">Compost / FYM</div>
+            <div style="font-size:0.68rem;color:var(--text-muted)">Organic Input Recycling</div>
+          </div>
+        </div>
+        <div class="intervention-desc">जैविक अपशिष्ट से खाद बनाना और N₂O emissions से बचाव</div>
+        <div class="intervention-ef">⚡ ~3.4 tCO₂e/ton N₂O avoided</div>
+        <div class="intervention-fields">
+          <div class="form-group" style="margin-top:8px">
+            <label class="form-label" style="font-size:0.72rem">Compost Produced (tons)</label>
+            <input type="number" class="form-input" id="iv-compost-tons" placeholder="1.0" step="0.1">
+          </div>
+        </div>
+      </div>
+
+      <!-- Residue -->
+      <div class="intervention-card" id="card-residue">
+        <div class="intervention-header">
+          <input type="checkbox" class="intervention-checkbox" id="iv-residue" data-key="residue">
+          <span class="intervention-icon">🌾</span>
+          <div>
+            <div class="intervention-name">Crop Residue</div>
+            <div style="font-size:0.68rem;color:var(--text-muted)">Burning Avoidance</div>
+          </div>
+        </div>
+        <div class="intervention-desc">पराली न जलाना — मिट्टी में मिलाना या mulching करना</div>
+        <div class="intervention-ef">⚡ ~0.19 tCO₂e/ton avoided</div>
+        <div class="intervention-fields">
+          <div class="form-group" style="margin-top:8px">
+            <label class="form-label" style="font-size:0.72rem">Residue Amount (tons)</label>
+            <input type="number" class="form-input" id="iv-residue-tons" placeholder="0.5" step="0.1">
+          </div>
+          <div class="form-group" style="margin-top:6px">
+            <label class="form-label" style="font-size:0.72rem">Management</label>
+            <select class="form-select" id="iv-residue-mgmt" style="font-size:0.8rem">
+              <option value="incorporate">Incorporate (मिट्टी में)</option>
+              <option value="mulch">Mulch (पलवार)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /intervention-grid -->
+
+    <div class="step-nav">
+      <button class="btn-prev" onclick="MRVWizard.goTo(3)">← Baseline Data</button>
+      <button class="btn-next" id="s4-next">Next: Evidence →</button>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────────────────────
+       STEP 5 — Evidence
+       ────────────────────────────────────────────────────────── -->
+  <div class="step-panel" id="step-5" data-step="5">
+    <div class="step-header">
+      <div class="step-icon">📷</div>
+      <div>
+        <div class="step-title">Evidence</div>
+        <div class="step-subtitle">Geo-tagged photos, documents, और videos — audit trail का आधार</div>
+        <span class="step-badge badge-optional">Optional — Strongly Recommended</span>
+      </div>
+    </div>
+
+    <!-- Photos -->
+    <div class="mrv-card">
+      <div class="mrv-card-title">📷 Geo-tagged Photos</div>
+      <div class="photo-upload-zone" id="photo-drop-zone">
+        <input type="file" id="photo-input" accept="image/*" multiple capture="environment">
+        <div class="upload-icon">📸</div>
+        <div class="upload-label">Photos upload करें या camera से लें</div>
+        <div class="upload-hint">GPS metadata automatically capture होगा • Max 5 photos • JPG/PNG</div>
+      </div>
+      <div class="photo-grid" id="photo-grid"></div>
+    </div>
+
+    <!-- Documents -->
+    <div class="mrv-card">
+      <div class="mrv-card-title">📄 Documents <span class="coming-soon-badge">Optional</span></div>
+      <div class="photo-upload-zone" style="padding:16px">
+        <input type="file" id="doc-input" accept=".pdf,.jpg,.png" multiple>
+        <div class="upload-icon">📎</div>
+        <div class="upload-label">Land records, Aadhar copy, CLF certificate</div>
+        <div class="upload-hint">PDF, JPG, PNG • Max 3 documents</div>
+      </div>
+      <div id="doc-list" style="margin-top:10px;font-size:0.8rem;color:var(--text-muted)"></div>
+    </div>
+
+    <!-- Videos -->
+    <div class="mrv-card" style="opacity:0.6">
+      <div class="mrv-card-title">🎥 Videos <span class="coming-soon-badge">Coming Soon</span></div>
+      <p style="font-size:0.8rem;color:var(--text-muted)">Video evidence — future update में available होगा।</p>
+    </div>
+
+    <div class="step-nav">
+      <button class="btn-prev" onclick="MRVWizard.goTo(4)">← Interventions</button>
+      <button class="btn-next" id="s5-next">Next: Carbon Calculation →</button>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────────────────────
+       STEP 6 — Carbon Calculation
+       ────────────────────────────────────────────────────────── -->
+  <div class="step-panel" id="step-6" data-step="6">
+    <div class="step-header">
+      <div class="step-icon">📊</div>
+      <div>
+        <div class="step-title">Carbon Calculation</div>
+        <div class="step-subtitle">IPCC emission factors के आधार पर tCO₂e auto-calculate</div>
+        <span class="step-badge badge-required">Auto-Calculated</span>
+      </div>
+    </div>
+
+    <!-- Methodology Select -->
+    <div class="mrv-card">
+      <div class="mrv-card-title">📋 Select Methodology</div>
+      <div class="form-grid">
+        <div class="form-group form-full">
+          <label class="form-label">Carbon Standard / Methodology</label>
+          <select class="form-select" id="c-methodology">
+            <option value="india_ccts">India CCTS (BEE) — Recommended for Uttarakhand</option>
+            <option value="verra_vm0042">Verra VCS VM0042 — IALM (Soil Carbon)</option>
+            <option value="verra_vm0044">Verra VCS VM0044 — Biochar</option>
+            <option value="gold_standard_istss">Gold Standard — ISLM</option>
+            <option value="jcm_india_awd">JCM Japan-India — AWD (Under Review)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Leakage Factor (%)</label>
+          <input type="number" class="form-input" id="c-leakage" value="5" min="0" max="30" step="1">
+          <span class="form-hint">Default 5% — IPCC standard</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Permanence Factor (%)</label>
+          <input type="number" class="form-input" id="c-permanence" value="85" min="50" max="100" step="1">
+          <span class="form-hint">Default 85% — Verra standard</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Carbon Price (₹/tCO₂e)</label>
+          <input type="number" class="form-input" id="c-price" value="600" min="100" step="50">
+          <span class="form-hint">India CCTS floor: ₹600</span>
+        </div>
+      </div>
+      <button class="btn-next" id="btn-calculate" style="margin-top:12px;padding:11px 24px">
+        ⚡ Calculate Carbon Credits
+      </button>
+    </div>
+
+    <!-- Results -->
+    <div id="carbon-results-wrap" style="display:none">
+      <div class="carbon-result-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1">
+          <div>
+            <div style="font-size:0.75rem;color:#a7f3d0;margin-bottom:4px">GROSS ESTIMATE</div>
+            <div class="carbon-gross" id="res-gross">0.000 tCO₂e</div>
+            <div class="carbon-net" id="res-net">Net (after leakage): 0.000 tCO₂e</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:0.72rem;color:#9ca3af">Est. Credit Value</div>
+            <div class="carbon-value" id="res-value">₹ 0</div>
+          </div>
+        </div>
+        <div class="carbon-breakdown" id="carbon-breakdown"></div>
+      </div>
+
+      <!-- Yield Data -->
+      <div class="mrv-card" style="margin-top:14px">
+        <div class="mrv-card-title">📈 Yield Comparison</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Actual Yield (kg)</label>
+            <input type="number" class="form-input" id="yd-actual" placeholder="200" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Market Price (₹/quintal)</label>
+            <input type="number" class="form-input" id="yd-price" placeholder="1800" min="0">
+          </div>
+        </div>
+        <div id="yield-comparison" style="display:none;margin-top:12px;padding:12px;background:var(--bg3);border-radius:var(--radius-sm)">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
+            <div><div style="font-size:0.7rem;color:var(--text-muted)">Before</div><div style="font-weight:700;color:var(--red)" id="yd-before">₹ 0</div></div>
+            <div><div style="font-size:0.7rem;color:var(--text-muted)">After</div><div style="font-weight:700;color:var(--green-light)" id="yd-after">₹ 0</div></div>
+            <div><div style="font-size:0.7rem;color:var(--text-muted)">Net Gain</div><div style="font-weight:700;color:var(--amber)" id="yd-gain">₹ 0</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Market Scenarios -->
+      <div class="mrv-card" style="margin-top:12px">
+        <div class="mrv-card-title">💰 Market Price Scenarios</div>
+        <div class="scenario-grid" id="scenario-grid"></div>
+      </div>
+    </div>
+
+    <div class="step-nav">
+      <button class="btn-prev" onclick="MRVWizard.goTo(5)">← Evidence</button>
+      <button class="btn-next" id="s6-next">Next: Review & Export →</button>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────────────────────
+       STEP 7 — Review & Export
+       ────────────────────────────────────────────────────────── -->
+  <div class="step-panel" id="step-7" data-step="7">
+    <div class="step-header">
+      <div class="step-icon">✅</div>
+      <div>
+        <div class="step-title">Review & Export</div>
+        <div class="step-subtitle">सारी जानकारी check करें और report export करें</div>
+        <span class="step-badge badge-required">Final Step</span>
+      </div>
+    </div>
+
+    <!-- Summary Review -->
+    <div id="review-summary"></div>
+
+    <!-- Timeline -->
+    <div class="mrv-card">
+      <div class="mrv-card-title">📅 Monitoring Timeline</div>
+      <div class="timeline-list" id="timeline-list"></div>
+      <button class="btn-add-event" id="btn-add-timeline">+ Add Monitoring Event</button>
+    </div>
+
+    <!-- Export -->
+    <div class="mrv-card">
+      <div class="mrv-card-title">📤 Export Report</div>
+      <div class="export-grid">
+        <button class="export-btn" id="exp-pdf">
+          <span class="exp-icon">📄</span>
+          <span class="exp-label">PDF Report</span>
+          <span class="exp-format">.pdf</span>
+        </button>
+        <button class="export-btn" id="exp-json">
+          <span class="exp-icon">{ }</span>
+          <span class="exp-label">Full Data</span>
+          <span class="exp-format">.json</span>
+        </button>
+        <button class="export-btn" id="exp-geojson">
+          <span class="exp-icon">🗺️</span>
+          <span class="exp-label">Field Boundary</span>
+          <span class="exp-format">.geojson</span>
+        </button>
+        <button class="export-btn" id="exp-csv">
+          <span class="exp-icon">📊</span>
+          <span class="exp-label">Summary CSV</span>
+          <span class="exp-format">.csv</span>
+        </button>
+        <button class="export-btn" id="exp-map">
+          <span class="exp-icon">🖼️</span>
+          <span class="exp-label">Map Snapshot</span>
+          <span class="exp-format">.png</span>
+        </button>
+        <button class="export-btn" id="exp-print" onclick="window.print()">
+          <span class="exp-icon">🖨️</span>
+          <span class="exp-label">Print</span>
+          <span class="exp-format">browser</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="step-nav">
+      <button class="btn-prev" onclick="MRVWizard.goTo(6)">← Carbon Calc</button>
+      <button class="btn-submit" id="btn-submit-mrv">✅ Submit MRV Record</button>
+    </div>
+  </div>
+
+</main>
+
+<!-- Toast -->
+<div id="mrv-toast"></div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SCRIPTS
+     ══════════════════════════════════════════════════════════════ -->
+<script src="./js/vendor/leaflet.min.js"></script>
+<script src="./js/vendor/leaflet.draw.min.js"></script>
+<script src="./js/vendor/jspdf.umd.min.js"></script>
+<script src="./js/mrv/utils.js"></script>
+<script src="./js/mrv/storage.js"></script>
+<script src="./js/mrv/calculator.js"></script>
+<script src="./js/mrv/pdf.js"></script>
+<script src="./js/mrv/mrv.js"></script>
+
+</body>
+</html>

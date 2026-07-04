@@ -1,0 +1,130 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-07-04",
+
+  "methodologies": {
+    "verra_vm0042": {
+      "id": "verra_vm0042",
+      "standard": "Verra VCS",
+      "code": "VM0042",
+      "name": "Improved Agricultural Land Management",
+      "short_name": "VM0042 — IALM",
+      "version": "2.0",
+      "status": "active",
+      "applicable_interventions": ["awd", "soc", "compost", "residue"],
+      "eligible_project_types": ["paddy", "dryland", "horticulture"],
+      "monitoring_frequency": "annual",
+      "minimum_project_area_ha": 0.5,
+      "crediting_period_years": 20,
+      "additionality_test": "performance_standard",
+      "mrd_required": true,
+      "third_party_verification": true,
+      "issuance_type": "ex_post",
+      "registry": "Verra",
+      "sdg_benefits": ["SDG-2", "SDG-13", "SDG-15"],
+      "notes": "Most widely used for agricultural soil carbon"
+    },
+
+    "verra_vm0044": {
+      "id": "verra_vm0044",
+      "standard": "Verra VCS",
+      "code": "VM0044",
+      "name": "Biochar Utilization in Soil and Non-Soil",
+      "short_name": "VM0044 — Biochar",
+      "version": "1.1",
+      "status": "active",
+      "applicable_interventions": ["biochar"],
+      "eligible_project_types": ["all"],
+      "monitoring_frequency": "annual",
+      "minimum_project_area_ha": 0.1,
+      "crediting_period_years": 60,
+      "additionality_test": "barrier_analysis",
+      "mrd_required": true,
+      "third_party_verification": true,
+      "issuance_type": "ex_post",
+      "registry": "Verra",
+      "sdg_benefits": ["SDG-2", "SDG-13"],
+      "key_requirement": "H:C org ratio < 0.7, minimum 550°C pyrolysis"
+    },
+
+    "gold_standard_istss": {
+      "id": "gold_standard_istss",
+      "standard": "Gold Standard",
+      "code": "ISTSS",
+      "name": "Integrated Soil, Land and Water Management",
+      "short_name": "GS — ISLM",
+      "version": "1.2",
+      "status": "active",
+      "applicable_interventions": ["soc", "awd", "agroforestry", "compost"],
+      "eligible_project_types": ["smallholder", "cooperative"],
+      "monitoring_frequency": "bi_annual",
+      "minimum_project_area_ha": 0.2,
+      "crediting_period_years": 10,
+      "additionality_test": "additionality_tool",
+      "mrd_required": true,
+      "third_party_verification": true,
+      "issuance_type": "ex_post",
+      "registry": "Gold Standard",
+      "sdg_benefits": ["SDG-1", "SDG-2", "SDG-5", "SDG-13", "SDG-15"],
+      "co_benefits_required": true
+    },
+
+    "jcm_india_awd": {
+      "id": "jcm_india_awd",
+      "standard": "JCM — Japan-India",
+      "code": "IN_M0023",
+      "name": "Methane Reduction from Paddy Field by Alternate Wetting and Drying",
+      "short_name": "JCM IN_M0023 — AWD",
+      "version": "1.0",
+      "status": "under_review",
+      "applicable_interventions": ["awd"],
+      "eligible_project_types": ["paddy"],
+      "monitoring_frequency": "seasonal",
+      "minimum_project_area_ha": 0.5,
+      "crediting_period_years": 10,
+      "additionality_test": "jcm_additionality_tool",
+      "mrd_required": true,
+      "third_party_verification": true,
+      "issuance_type": "ex_post",
+      "registry": "JCM",
+      "bilateral_agreement": "India-Japan",
+      "status_note": "Methodology confirmation pending — coming soon"
+    },
+
+    "india_ccts": {
+      "id": "india_ccts",
+      "standard": "India CCTS",
+      "code": "CCTS-AGRI",
+      "name": "India Carbon Credit Trading Scheme — Agriculture Sector",
+      "short_name": "India CCTS",
+      "version": "Draft 2023",
+      "status": "pilot",
+      "applicable_interventions": ["awd", "soc", "biochar", "agroforestry", "compost", "residue"],
+      "eligible_project_types": ["all"],
+      "monitoring_frequency": "annual",
+      "minimum_project_area_ha": 0.1,
+      "crediting_period_years": 7,
+      "additionality_test": "india_baseline_methodology",
+      "mrd_required": true,
+      "third_party_verification": false,
+      "issuance_type": "ex_ante_and_ex_post",
+      "registry": "India CCTS Registry (BEE)",
+      "price_floor_inr": 400,
+      "price_ceiling_inr": 1500,
+      "aggregation_allowed": true,
+      "notes": "Allows aggregation via CLF/FPO. Most suitable for Uttarakhand smallholders."
+    }
+  },
+
+  "reporting_periods": {
+    "baseline_years": 3,
+    "monitoring_interval_months": 12,
+    "verification_interval_years": 1
+  },
+
+  "additionality_criteria": {
+    "regulatory_surplus": "Project activities must go beyond regulatory requirements",
+    "financial_additionality": "Carbon finance is required to make project viable",
+    "barrier_analysis": "Identify and overcome technological/investment barriers"
+  }
+}
