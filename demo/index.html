@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="hi" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#16a34a">
+  <title>Agri Monitor — Demo | CHANGE TechLab</title>
+  <meta name="description" content="Mountain Farmer MRV Demo — Farmer Registration, GIS Mapping, Photo Upload, Auto PDF Report">
+
+  <!-- CDN for demo simplicity -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ─── Variables ─── */
+:root {
+  --bg:    #0d1117; --bg2: #131920; --bg3: #1a2332;
+  --card:  rgba(255,255,255,0.04); --border: rgba(255,255,255,0.08);
+  --green: #16a34a; --green-l: #22c55e; --green-g: rgba(22,163,74,0.15);
+  --teal:  #14b8a6; --blue: #3b82f6; --amber: #f59e0b; --red: #ef4444;
+  --text:  #e2e8f0; --muted: #64748b; --faint: #374151;
+  --shadow: 0 4px 20px rgba(0,0,0,0.4); --r: 12px; --r2: 8px;
+  --font: 'Inter','Noto Sans Devanagari',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ─── Topbar ─── */
+#topbar{
+  position:sticky;top:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;height:56px;
+  background:rgba(13,17,23,0.96);border-bottom:1px solid var(--border);
+  backdrop-filter:blur(12px);
+}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-icon{font-size:1.6rem}
+.brand-title{font-size:1rem;font-weight:800;color:var(--green-l);letter-spacing:-0.3px}
+.brand-sub{font-size:0.68rem;color:var(--muted)}
+.topbar-meta{display:flex;align-items:center;gap:8px}
+.badge-demo{background:linear-gradient(135deg,#7c3aed,#3b82f6);color:#fff;font-size:0.65rem;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.5px}
+
+/* ─── Bottom Nav ─── */
+#bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:200;
+  display:flex;background:rgba(19,25,32,0.97);border-top:1px solid var(--border);
+  backdrop-filter:blur(12px);height:60px;
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:2px;cursor:pointer;
+  border:none;background:none;color:var(--muted);
+  font-family:var(--font);font-size:0.6rem;font-weight:600;
+  transition:all 0.2s;position:relative;
+}
+.nav-item.active{color:var(--green-l)}
+.nav-item.active::before{
+  content:'';position:absolute;top:0;left:20%;right:20%;
+  height:2px;background:var(--green);border-radius:0 0 2px 2px;
+}
+.nav-icon{font-size:1.3rem;line-height:1}
+
+/* ─── Pages ─── */
+.page{display:none;padding:16px 16px 80px;max-width:640px;margin:0 auto;animation:fadeUp 0.3s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ─── Hero (Dashboard) ─── */
+.hero{
+  background:linear-gradient(135deg,#022c22,#064e3b,#0d1117);
+  border:1px solid rgba(22,163,74,0.2);border-radius:var(--r);
+  padding:24px;margin-bottom:16px;position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;top:-40px;right:-40px;
+  width:160px;height:160px;background:rgba(22,163,74,0.08);
+  filter:blur(50px);border-radius:50%;pointer-events:none;
+}
+.hero-label{font-size:0.7rem;color:#6ee7b7;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.hero-title{font-size:1.5rem;font-weight:800;color:#fff;line-height:1.2;margin-bottom:4px}
+.hero-sub{font-size:0.8rem;color:#a7f3d0;margin-bottom:16px}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.h-stat{background:rgba(0,0,0,0.25);border-radius:var(--r2);padding:12px;text-align:center}
+.h-stat-val{font-size:1.5rem;font-weight:800;color:#6ee7b7}
+.h-stat-lbl{font-size:0.68rem;color:#9ca3af;margin-top:2px}
+
+/* ─── Section Title ─── */
+.sec-title{font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin:20px 0 10px;display:flex;align-items:center;gap:6px}
+
+/* ─── Farmer List Cards ─── */
+.farmer-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px;margin-bottom:10px;
+  display:flex;align-items:center;gap:12px;cursor:pointer;
+  transition:all 0.2s;
+}
+.farmer-card:hover{border-color:rgba(22,163,74,0.3);background:var(--green-g)}
+.farmer-avatar{
+  width:42px;height:42px;border-radius:50%;
+  background:linear-gradient(135deg,var(--green),var(--teal));
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;flex-shrink:0;
+}
+.farmer-name{font-weight:600;font-size:0.9rem}
+.farmer-meta{font-size:0.75rem;color:var(--muted);margin-top:2px}
+.farmer-badges{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+.fbd{font-size:0.6rem;padding:2px 7px;border-radius:8px;font-weight:600}
+.fbd-green{background:rgba(22,163,74,0.15);color:var(--green-l);border:1px solid rgba(22,163,74,0.2)}
+.fbd-blue{background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.2)}
+.fbd-amber{background:rgba(245,158,11,0.15);color:#fcd34d;border:1px solid rgba(245,158,11,0.2)}
+.farmer-action{margin-left:auto;opacity:0.4;font-size:1rem}
+
+/* ─── Cards / Widgets ─── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.card-title{font-size:0.8rem;font-weight:700;color:var(--green-l);margin-bottom:12px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:0.5px}
+
+/* ─── Forms ─── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-full{grid-column:1/-1}
+@media(max-width:480px){.form-grid{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.lbl{font-size:0.75rem;font-weight:600;color:var(--muted)}
+.lbl .req{color:var(--red)}
+.inp,.sel,.txa{
+  width:100%;padding:10px 12px;border-radius:var(--r2);
+  border:1px solid var(--border);background:var(--bg3);color:var(--text);
+  font-size:0.87rem;font-family:var(--font);outline:none;transition:all 0.2s;
+}
+.inp:focus,.sel:focus,.txa:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-g)}
+.inp::placeholder{color:var(--faint)}
+.sel option{background:var(--bg2)}
+.txa{resize:vertical;min-height:70px}
+.inp.err{border-color:var(--red)}
+
+/* ─── Buttons ─── */
+.btn{padding:11px 22px;border-radius:var(--r2);font-size:0.88rem;font-weight:600;cursor:pointer;border:none;font-family:var(--font);transition:all 0.2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--green);color:#fff;box-shadow:0 4px 12px rgba(22,163,74,0.3)}
+.btn-primary:hover{background:var(--green-l);transform:translateY(-1px)}
+.btn-secondary{background:var(--bg3);color:var(--green-l);border:1px solid var(--green)}
+.btn-secondary:hover{background:var(--green-g)}
+.btn-full{width:100%;justify-content:center}
+.btn-danger{background:rgba(239,68,68,0.1);color:#f87171;border:1px solid rgba(239,68,68,0.2)}
+
+/* ─── GPS Row ─── */
+.gps-row{display:flex;gap:8px}
+.gps-row .inp{flex:1}
+.btn-gps{padding:10px 12px;border-radius:var(--r2);border:1px solid var(--green);background:var(--green-g);color:var(--green-l);font-size:0.8rem;cursor:pointer;white-space:nowrap;transition:all 0.2s;font-family:var(--font)}
+.btn-gps:hover{background:var(--green);color:#fff}
+
+/* ─── Map ─── */
+#leaflet-map{height:340px;border-radius:var(--r);overflow:hidden;border:2px solid var(--border)}
+#leaflet-map.has-poly{border-color:var(--green)}
+.map-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.map-btn{padding:8px 14px;border-radius:var(--r2);font-size:0.78rem;font-weight:600;border:1px solid var(--border);background:var(--bg3);color:var(--muted);cursor:pointer;transition:all 0.2s;font-family:var(--font)}
+.map-btn:hover{border-color:var(--green);color:var(--green-l)}
+.map-btn.active{background:var(--green-g);border-color:var(--green);color:var(--green-l)}
+#area-box{background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--green);border-radius:var(--r2);padding:14px;text-align:center;margin-top:10px;display:none}
+.area-big{font-size:1.4rem;font-weight:800;color:var(--green-l)}
+.area-small{font-size:0.75rem;color:var(--muted);margin-top:3px}
+
+/* ─── Photo Upload ─── */
+.drop-zone{
+  border:2px dashed var(--border);border-radius:var(--r);
+  padding:28px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;
+}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--green);background:var(--green-g)}
+.drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.dz-icon{font-size:2.5rem;margin-bottom:8px}
+.dz-lbl{font-size:0.85rem;color:var(--muted)}
+.dz-hint{font-size:0.72rem;color:var(--faint);margin-top:4px}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-top:12px}
+.photo-thumb{position:relative;border-radius:var(--r2);overflow:hidden;aspect-ratio:1;border:1px solid var(--border)}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-thumb .rm{position:absolute;top:3px;right:3px;width:20px;height:20px;background:rgba(0,0,0,0.75);color:#fff;border:none;border-radius:50%;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.photo-thumb .gps-tag{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.7);font-size:0.5rem;color:#6ee7b7;padding:2px 4px;text-align:center}
+
+/* ─── Intervention Chips ─── */
+.chip-grid{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  padding:8px 14px;border-radius:20px;border:1px solid var(--border);
+  background:var(--bg3);color:var(--muted);font-size:0.78rem;font-weight:600;
+  cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:5px;
+}
+.chip:hover{border-color:var(--green);color:var(--green-l)}
+.chip.on{background:var(--green-g);border-color:var(--green);color:var(--green-l)}
+
+/* ─── PDF Preview / Report ─── */
+.report-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.r-item{background:var(--bg3);border-radius:var(--r2);padding:10px;border:1px solid var(--border)}
+.r-lbl{font-size:0.68rem;color:var(--muted)}
+.r-val{font-size:0.88rem;font-weight:600;margin-top:2px}
+.carbon-pill{
+  background:linear-gradient(135deg,#022c22,#064e3b);
+  border:1px solid rgba(22,163,74,0.3);border-radius:var(--r);
+  padding:18px;text-align:center;margin:12px 0;
+}
+.co2-big{font-size:2rem;font-weight:800;color:#6ee7b7}
+.co2-sub{font-size:0.78rem;color:#a7f3d0;margin-top:4px}
+.export-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.exp-btn{
+  padding:14px 8px;border-radius:var(--r);border:1px solid var(--border);
+  background:var(--card);cursor:pointer;transition:all 0.2s;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  font-family:var(--font);
+}
+.exp-btn:hover{border-color:var(--green);background:var(--green-g)}
+.exp-icon{font-size:1.6rem}
+.exp-lbl{font-size:0.7rem;font-weight:600;color:var(--muted)}
+.exp-btn:hover .exp-lbl{color:var(--green-l)}
+
+/* ─── Toast ─── */
+#toast{
+  position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
+  padding:10px 18px;font-size:0.82rem;box-shadow:var(--shadow);
+  opacity:0;pointer-events:none;transition:all 0.3s;z-index:9999;white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.s{border-color:var(--green);color:var(--green-l)}
+#toast.e{border-color:var(--red);color:#f87171}
+
+/* ─── Empty State ─── */
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-icon{font-size:2.5rem;margin-bottom:10px}
+.empty-lbl{font-size:0.85rem}
+
+/* ─── Step indicator (Registration) ─── */
+.steps{display:flex;gap:6px;margin-bottom:16px;align-items:center}
+.st{flex:1;height:3px;border-radius:2px;background:var(--border);transition:all 0.3s}
+.st.done{background:var(--green)}
+.st.active{background:linear-gradient(90deg,var(--green),var(--teal))}
+.step-label{font-size:0.72rem;color:var(--muted);margin-bottom:8px}
+
+/* ─── Misc ─── */
+.divider{height:1px;background:var(--border);margin:14px 0}
+.tag{font-size:0.65rem;padding:2px 8px;border-radius:8px;font-weight:600}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green-l);animation:pulse 1.8s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.5)}50%{box-shadow:0 0 0 5px rgba(34,197,94,0)}}
+</style>
+</head>
+<body>
+
+<!-- ══ TOPBAR ══ -->
+<header id="topbar">
+  <div class="brand">
+    <span class="brand-icon">🌾</span>
+    <div>
+      <div class="brand-title">Agri Monitor</div>
+      <div class="brand-sub">CHANGE TechLab · Uttarakhand</div>
+    </div>
+  </div>
+  <div class="topbar-meta">
+    <div class="live-dot" title="Demo Mode"></div>
+    <span class="badge-demo">DEMO</span>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 1 — DASHBOARD
+══════════════════════════════════════════════════ -->
+<div class="page active" id="pg-dashboard">
+
+  <div class="hero">
+    <div class="hero-label">🌄 Rudraprayag District · Uttarakhand</div>
+    <div class="hero-title">Mountain Farmer<br>Intelligence Platform</div>
+    <div class="hero-sub">Satellite + Field Data + Carbon Tracking</div>
+    <div class="hero-stats">
+      <div class="h-stat">
+        <div class="h-stat-val" id="dash-farmers">0</div>
+        <div class="h-stat-lbl">किसान</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-stat-val" id="dash-area">0</div>
+        <div class="h-stat-lbl">हेक्टेयर</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-stat-val" id="dash-co2">0</div>
+        <div class="h-stat-lbl">tCO₂e</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-title">👨‍🌾 पंजीकृत किसान</div>
+  <div id="farmer-list">
+    <div class="empty"><div class="empty-icon">🌱</div><div class="empty-lbl">अभी कोई किसान पंजीकृत नहीं।<br>नीचे "Register" पर tap करें।</div></div>
+  </div>
+
+  <div class="sec-title">📊 Quick Actions</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <button class="card" style="cursor:pointer;border:none;text-align:center;padding:16px" onclick="switchPage('register')">
+      <div style="font-size:1.8rem">📝</div>
+      <div style="font-size:0.8rem;font-weight:600;margin-top:6px;color:var(--text)">New Registration</div>
+    </button>
+    <button class="card" style="cursor:pointer;border:none;text-align:center;padding:16px" onclick="switchPage('map')">
+      <div style="font-size:1.8rem">🗺️</div>
+      <div style="font-size:0.8rem;font-weight:600;margin-top:6px;color:var(--text)">Map Field</div>
+    </button>
+    <button class="card" style="cursor:pointer;border:none;text-align:center;padding:16px" onclick="switchPage('photos')">
+      <div style="font-size:1.8rem">📸</div>
+      <div style="font-size:0.8rem;font-weight:600;margin-top:6px;color:var(--text)">Add Evidence</div>
+    </button>
+    <button class="card" style="cursor:pointer;border:none;text-align:center;padding:16px" onclick="switchPage('report')">
+      <div style="font-size:1.8rem">📄</div>
+      <div style="font-size:0.8rem;font-weight:600;margin-top:6px;color:var(--text)">Generate Report</div>
+    </button>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 2 — FARMER REGISTRATION
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-register">
+
+  <div style="margin-bottom:16px">
+    <div class="step-label">Step <span id="reg-step-lbl">1</span> of 3</div>
+    <div class="steps">
+      <div class="st active" id="st-1"></div>
+      <div class="st" id="st-2"></div>
+      <div class="st" id="st-3"></div>
+    </div>
+  </div>
+
+  <!-- Step 1: Personal -->
+  <div id="reg-s1">
+    <div class="card">
+      <div class="card-title">👨‍🌾 Personal Details</div>
+      <div class="form-grid">
+        <div class="form-group form-full">
+          <label class="lbl">किसान का नाम <span class="req">*</span></label>
+          <input class="inp" id="r-name" placeholder="पूरा नाम">
+        </div>
+        <div class="form-group">
+          <label class="lbl">मोबाइल <span class="req">*</span></label>
+          <input class="inp" id="r-mobile" type="tel" placeholder="10 अंक" maxlength="10">
+        </div>
+        <div class="form-group">
+          <label class="lbl">लिंग</label>
+          <select class="sel" id="r-gender">
+            <option value="">चुनें</option>
+            <option value="महिला">महिला</option>
+            <option value="पुरुष">पुरुष</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="lbl">जिला</label>
+          <select class="sel" id="r-district">
+            <option value="Rudraprayag">रुद्रप्रयाग</option>
+            <option value="Tehri">टिहरी</option>
+            <option value="Chamoli">चमोली</option>
+            <option value="Uttarkashi">उत्तरकाशी</option>
+            <option value="Pauri">पौड़ी</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="lbl">ब्लॉक</label>
+          <input class="inp" id="r-block" placeholder="ब्लॉक नाम">
+        </div>
+        <div class="form-group">
+          <label class="lbl">गाँव <span class="req">*</span></label>
+          <input class="inp" id="r-village" placeholder="ग्राम नाम">
+        </div>
+        <div class="form-group form-full">
+          <label class="lbl">CLF / SHG</label>
+          <input class="inp" id="r-clf" placeholder="जैसे: पहाड़ी CLF, उर्वरा SHG">
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <button class="btn btn-primary btn-full" onclick="regStep(2)">Next: Land Details →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Land -->
+  <div id="reg-s2" style="display:none">
+    <div class="card">
+      <div class="card-title">🗺️ Land Details</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="lbl">खसरा नंबर</label>
+          <input class="inp" id="r-khasra" placeholder="जैसे: 234/1">
+        </div>
+        <div class="form-group">
+          <label class="lbl">क्षेत्रफल (बीघा)</label>
+          <input class="inp" id="r-area" type="number" placeholder="जैसे: 2.5" min="0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label class="lbl">प्राथमिक फसल</label>
+          <select class="sel" id="r-crop">
+            <option value="धान">धान (Paddy)</option>
+            <option value="गेहूँ">गेहूँ (Wheat)</option>
+            <option value="मंडुवा">मंडुवा (Finger Millet)</option>
+            <option value="झंगोरा">झंगोरा (Barnyard Millet)</option>
+            <option value="आलू">आलू (Potato)</option>
+            <option value="राजमा">राजमा</option>
+            <option value="सब्जी">सब्जी</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="lbl">सिंचाई</label>
+          <select class="sel" id="r-irrigation">
+            <option value="वर्षाआश्रित">वर्षाआश्रित</option>
+            <option value="नहर">नहर</option>
+            <option value="नलकूप">नलकूप</option>
+            <option value="नौला/Spring">नौला/Spring</option>
+            <option value="टपक/Drip">टपक/Drip</option>
+          </select>
+        </div>
+        <div class="form-group form-full">
+          <label class="lbl">GPS Location</label>
+          <div class="gps-row">
+            <input class="inp" id="r-lat" placeholder="Latitude" readonly>
+            <input class="inp" id="r-lng" placeholder="Longitude" readonly>
+            <button class="btn-gps" id="btn-reg-gps" onclick="captureGPS()">📡 GPS</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-secondary" onclick="regStep(1)">← Back</button>
+        <button class="btn btn-primary" style="flex:1" onclick="regStep(3)">Next: Interventions →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Interventions -->
+  <div id="reg-s3" style="display:none">
+    <div class="card">
+      <div class="card-title">🌿 Carbon Interventions</div>
+      <div class="chip-grid" id="chip-grid">
+        <div class="chip" data-val="AWD" onclick="toggleChip(this)">💧 AWD</div>
+        <div class="chip" data-val="SOC Enhancement" onclick="toggleChip(this)">🌱 SOC</div>
+        <div class="chip" data-val="Biochar" onclick="toggleChip(this)">🔥 Biochar</div>
+        <div class="chip" data-val="Agroforestry" onclick="toggleChip(this)">🌳 Agroforestry</div>
+        <div class="chip" data-val="Compost" onclick="toggleChip(this)">🟤 Compost</div>
+        <div class="chip" data-val="Residue Mgmt" onclick="toggleChip(this)">🌾 Residue Mgmt</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <div class="card-title">📝 Notes</div>
+      <textarea class="txa" id="r-notes" placeholder="कोई अतिरिक्त जानकारी..."></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-secondary" onclick="regStep(2)">← Back</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveRegistration()">✅ Save Registration</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 3 — MAP (Polygon)
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-map">
+
+  <div class="map-toolbar">
+    <button class="map-btn" id="mbtn-draw" onclick="startDraw()">✏️ Draw</button>
+    <button class="map-btn danger" onclick="deletePolygon()" style="color:var(--red);border-color:rgba(239,68,68,0.3)">🗑 Delete</button>
+    <button class="map-btn" onclick="locateMe()">📡 My Location</button>
+    <button class="map-btn" id="mbtn-sat" onclick="toggleSat()">🛰 Satellite</button>
+  </div>
+
+  <div id="leaflet-map"></div>
+
+  <div id="area-box">
+    <div class="area-big" id="area-txt">—</div>
+    <div class="area-small" id="area-sub-txt">Area calculated</div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <div class="card-title">📜 Plot Details (Optional)</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="lbl">Farmer</label>
+        <select class="sel" id="map-farmer-sel">
+          <option value="">Select Farmer</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Khasra No.</label>
+        <input class="inp" id="map-khasra" placeholder="234/1">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" style="margin-top:10px" onclick="saveMapData()">💾 Save Field Boundary</button>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 4 — PHOTOS
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-photos">
+
+  <div class="card">
+    <div class="card-title">📷 Field Evidence Upload</div>
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" id="photo-inp" accept="image/*" multiple capture="environment">
+      <div class="dz-icon">📸</div>
+      <div class="dz-lbl">Photos लें या Gallery से चुनें</div>
+      <div class="dz-hint">GPS location auto-capture होगा • JPG / PNG • Max 10</div>
+    </div>
+    <div class="photo-grid" id="photo-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔗 Link to Farmer</div>
+    <select class="sel" id="photo-farmer-sel">
+      <option value="">Select Farmer</option>
+    </select>
+    <div style="display:flex;gap:6px;margin-top:10px">
+      <select class="sel" id="photo-type">
+        <option value="Field">🌾 Field</option>
+        <option value="Crop">🌱 Crop</option>
+        <option value="Irrigation">💧 Irrigation</option>
+        <option value="Intervention">🌿 Intervention</option>
+        <option value="Soil">🟤 Soil Sample</option>
+      </select>
+      <button class="btn btn-primary" style="flex:0 0 auto" onclick="savePhotos()">💾 Save</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 5 — REPORT
+══════════════════════════════════════════════════ -->
+<div class="page" id="pg-report">
+
+  <div class="card">
+    <div class="card-title">📄 Generate MRV Report</div>
+    <div class="form-group">
+      <label class="lbl">Farmer Select करें</label>
+      <select class="sel" id="rep-farmer-sel" onchange="buildReport()">
+        <option value="">— Select —</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="report-content" style="display:none">
+    <div class="carbon-pill">
+      <div style="font-size:0.75rem;color:#a7f3d0;margin-bottom:4px">ESTIMATED CARBON IMPACT</div>
+      <div class="co2-big" id="rep-co2">0.000</div>
+      <div style="font-size:0.78rem;color:#a7f3d0">tCO₂e / year</div>
+      <div style="margin-top:8px;font-size:0.75rem;color:#6ee7b7" id="rep-credit">Est. Value: ₹ 0</div>
+    </div>
+
+    <div class="sec-title">📋 Farmer Summary</div>
+    <div class="report-meta" id="rep-meta"></div>
+
+    <div class="sec-title">🌿 Interventions</div>
+    <div id="rep-interventions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"></div>
+
+    <div class="sec-title">🗺️ Field Boundary</div>
+    <div id="rep-map-status" class="card" style="text-align:center;padding:12px;font-size:0.8rem;color:var(--muted)">
+      📍 Field boundary details here
+    </div>
+
+    <div class="sec-title">📤 Export</div>
+    <div class="export-grid">
+      <button class="exp-btn" onclick="exportPDF()">
+        <span class="exp-icon">📄</span>
+        <span class="exp-lbl">PDF Report</span>
+      </button>
+      <button class="exp-btn" onclick="exportJSON()">
+        <span class="exp-icon">{ }</span>
+        <span class="exp-lbl">JSON Data</span>
+      </button>
+      <button class="exp-btn" onclick="exportGeoJSON()">
+        <span class="exp-icon">🗺️</span>
+        <span class="exp-lbl">GeoJSON</span>
+      </button>
+    </div>
+
+    <div style="margin-top:14px">
+      <div style="font-size:0.68rem;color:var(--muted);text-align:center">
+        MRV ID: <span id="rep-mrv-id" style="font-family:monospace;color:var(--green-l)">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="report-empty" class="empty">
+    <div class="empty-icon">📊</div>
+    <div class="empty-lbl">Farmer select करें report देखने के लिए</div>
+  </div>
+
+</div>
+
+<!-- ══ BOTTOM NAV ══ -->
+<nav id="bottom-nav">
+  <button class="nav-item active" id="nav-dashboard" onclick="switchPage('dashboard')">
+    <span class="nav-icon">🏠</span>Dashboard
+  </button>
+  <button class="nav-item" id="nav-register" onclick="switchPage('register')">
+    <span class="nav-icon">📝</span>Register
+  </button>
+  <button class="nav-item" id="nav-map" onclick="switchPage('map')">
+    <span class="nav-icon">🗺️</span>Map
+  </button>
+  <button class="nav-item" id="nav-photos" onclick="switchPage('photos')">
+    <span class="nav-icon">📸</span>Photos
+  </button>
+  <button class="nav-item" id="nav-report" onclick="switchPage('report')">
+    <span class="nav-icon">📄</span>Report
+  </button>
+</nav>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- CDN Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════ */
+const DB = {
+  get farmers()     { return JSON.parse(localStorage.getItem('demo_farmers') || '[]') },
+  set farmers(v)    { localStorage.setItem('demo_farmers', JSON.stringify(v)) },
+  get photos()      { return JSON.parse(localStorage.getItem('demo_photos') || '[]') },
+  set photos(v)     { localStorage.setItem('demo_photos', JSON.stringify(v)) },
+  get mapData()     { return JSON.parse(localStorage.getItem('demo_map') || '{}') },
+  set mapData(v)    { localStorage.setItem('demo_map', JSON.stringify(v)) },
+};
+
+let _map = null, _drawnPoly = null, _fg = null, _satMode = false;
+let _tmpPhotos = [];
+let _regStep = 1;
+let _selectedInterventions = [];
+
+/* ═══════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════ */
+function switchPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('pg-' + id)?.classList.add('active');
+  document.getElementById('nav-' + id)?.classList.add('active');
+
+  if (id === 'dashboard') refreshDashboard();
+  if (id === 'map')       initMap();
+  if (id === 'register')  { _regStep = 1; regStep(1, true); }
+  if (id === 'report')    { refreshSelects(); document.getElementById('report-empty').style.display='block'; document.getElementById('report-content').style.display='none'; }
+  if (id === 'photos')    refreshSelects();
+}
+
+/* ═══════════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════════ */
+function refreshDashboard() {
+  const farmers = DB.farmers;
+  document.getElementById('dash-farmers').textContent = farmers.length;
+  const totalArea = farmers.reduce((a, f) => a + (parseFloat(f.area_bigha) || 0), 0);
+  document.getElementById('dash-area').textContent = (totalArea * 0.25).toFixed(2); // bigha to ha
+  const totalCO2 = farmers.reduce((a, f) => a + (f.estimated_co2 || 0), 0);
+  document.getElementById('dash-co2').textContent = totalCO2.toFixed(2);
+
+  const list = document.getElementById('farmer-list');
+  if (!farmers.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">🌱</div><div class="empty-lbl">अभी कोई किसान पंजीकृत नहीं।<br>नीचे "Register" पर tap करें।</div></div>';
+    return;
+  }
+  list.innerHTML = farmers.map((f, i) => `
+    <div class="farmer-card" onclick="viewFarmer(${i})">
+      <div class="farmer-avatar">${f.gender === 'महिला' ? '👩‍🌾' : '👨‍🌾'}</div>
+      <div style="flex:1">
+        <div class="farmer-name">${f.name}</div>
+        <div class="farmer-meta">${f.village}, ${f.block || ''} · ${f.mobile}</div>
+        <div class="farmer-badges">
+          ${f.crop ? `<span class="fbd fbd-green">🌾 ${f.crop}</span>` : ''}
+          ${f.interventions?.length ? `<span class="fbd fbd-blue">🌿 ${f.interventions.length} Interventions</span>` : ''}
+          ${f.estimated_co2 ? `<span class="fbd fbd-amber">🌍 ${f.estimated_co2} tCO₂e</span>` : ''}
+        </div>
+      </div>
+      <span class="farmer-action">›</span>
+    </div>`).join('');
+}
+
+function viewFarmer(i) {
+  const f = DB.farmers[i];
+  if (!f) return;
+  document.getElementById('rep-farmer-sel').value = i;
+  switchPage('report');
+  setTimeout(() => buildReport(), 100);
+}
+
+/* ═══════════════════════════════════════════════════
+   REGISTRATION
+═══════════════════════════════════════════════════ */
+function regStep(step, reset = false) {
+  if (step === 2 && !validateRegStep1()) return;
+  _regStep = step;
+  [1, 2, 3].forEach(n => {
+    document.getElementById('reg-s' + n).style.display = n === step ? 'block' : 'none';
+    const st = document.getElementById('st-' + n);
+    st.className = 'st' + (n < step ? ' done' : n === step ? ' active' : '');
+  });
+  document.getElementById('reg-step-lbl').textContent = step;
+  if (reset) _selectedInterventions = [];
+}
+
+function validateRegStep1() {
+  const name = document.getElementById('r-name').value.trim();
+  const mob  = document.getElementById('r-mobile').value.trim();
+  const vil  = document.getElementById('r-village').value.trim();
+  if (!name) { document.getElementById('r-name').classList.add('err'); toast('नाम आवश्यक है', 'e'); return false; }
+  if (!mob || !/^[6-9]\d{9}$/.test(mob)) { document.getElementById('r-mobile').classList.add('err'); toast('Valid mobile number दें', 'e'); return false; }
+  if (!vil)  { document.getElementById('r-village').classList.add('err'); toast('गाँव का नाम दें', 'e'); return false; }
+  document.querySelectorAll('.inp.err').forEach(el => el.classList.remove('err'));
+  return true;
+}
+
+function toggleChip(el) {
+  el.classList.toggle('on');
+  const val = el.dataset.val;
+  if (el.classList.contains('on')) { if (!_selectedInterventions.includes(val)) _selectedInterventions.push(val); }
+  else _selectedInterventions = _selectedInterventions.filter(v => v !== val);
+}
+
+function saveRegistration() {
+  const farmers = DB.farmers;
+  const count   = farmers.length + 1;
+  const district = document.getElementById('r-district').value;
+  const distCodes = { Rudraprayag:'RPG', Tehri:'TRG', Chamoli:'CML', Uttarkashi:'UTK', Pauri:'PGW' };
+  const mrv_id = `CTL-MRV-UK-${distCodes[district]||'UKD'}-${new Date().getFullYear()}-${String(count).padStart(6,'0')}`;
+
+  const area_bigha = parseFloat(document.getElementById('r-area').value) || 0;
+  const area_ha    = area_bigha * 0.25;
+  const estimated_co2 = estimateCO2(_selectedInterventions, area_ha);
+
+  const farmer = {
+    id:            Date.now(),
+    mrv_id,
+    name:          document.getElementById('r-name').value.trim(),
+    mobile:        document.getElementById('r-mobile').value.trim(),
+    gender:        document.getElementById('r-gender').value,
+    village:       document.getElementById('r-village').value.trim(),
+    block:         document.getElementById('r-block').value.trim(),
+    district,
+    clf:           document.getElementById('r-clf').value.trim(),
+    khasra:        document.getElementById('r-khasra').value.trim(),
+    area_bigha,
+    area_ha,
+    crop:          document.getElementById('r-crop').value,
+    irrigation:    document.getElementById('r-irrigation').value,
+    lat:           parseFloat(document.getElementById('r-lat').value) || null,
+    lng:           parseFloat(document.getElementById('r-lng').value) || null,
+    interventions: [..._selectedInterventions],
+    estimated_co2,
+    notes:         document.getElementById('r-notes').value.trim(),
+    created_at:    new Date().toISOString()
+  };
+
+  farmers.push(farmer);
+  DB.farmers = farmers;
+
+  // Reset form
+  ['r-name','r-mobile','r-gender','r-block','r-village','r-clf','r-khasra','r-area','r-lat','r-lng','r-notes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.querySelectorAll('.chip.on').forEach(c => c.classList.remove('on'));
+  _selectedInterventions = [];
+
+  toast(`✅ ${farmer.name} registered! MRV: ${mrv_id}`, 's');
+  setTimeout(() => switchPage('dashboard'), 800);
+}
+
+function estimateCO2(interventions, area_ha) {
+  let total = 0;
+  if (interventions.includes('AWD'))         total += area_ha * 0.52 * 28 * 0.001;
+  if (interventions.includes('SOC Enhancement')) total += area_ha * 0.35 * 0.85;
+  if (interventions.includes('Biochar'))     total += area_ha * 5 * 2.38 * 0.9;
+  if (interventions.includes('Agroforestry'))total += area_ha * 50 * 0.015;
+  if (interventions.includes('Compost'))     total += area_ha * 2 * 0.08;
+  if (interventions.includes('Residue Mgmt'))total += area_ha * 1 * 0.19;
+  return +total.toFixed(3);
+}
+
+async function captureGPS() {
+  const btn = document.getElementById('btn-reg-gps');
+  btn.textContent = '⏳';
+  try {
+    const pos = await getPos();
+    document.getElementById('r-lat').value = pos.lat.toFixed(6);
+    document.getElementById('r-lng').value = pos.lng.toFixed(6);
+    toast('📡 GPS captured!', 's');
+  } catch { toast('GPS failed — allow location access', 'e'); }
+  finally { btn.textContent = '📡 GPS'; }
+}
+
+function getPos() {
+  return new Promise((res, rej) => {
+    navigator.geolocation.getCurrentPosition(
+      p => res({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      rej, { enableHighAccuracy: true, timeout: 8000 }
+    );
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   LEAFLET MAP
+═══════════════════════════════════════════════════ */
+let _mapInited = false;
+function initMap() {
+  if (_mapInited) { setTimeout(() => _map?.invalidateSize(), 200); return; }
+  _mapInited = true;
+
+  _map = L.map('leaflet-map', { zoomControl: true }).setView([30.3985, 79.0561], 13);
+  const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
+  const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+  osm.addTo(_map);
+  _map._osm = osm; _map._sat = sat;
+
+  _fg = new L.FeatureGroup().addTo(_map);
+
+  if (L.Control?.Draw) {
+    const dc = new L.Control.Draw({
+      edit: { featureGroup: _fg },
+      draw: { polygon: { shapeOptions: { color: '#16a34a', fillOpacity: 0.15 } }, rectangle: false, circle: false, circlemarker: false, polyline: false, marker: false }
+    }).addTo(_map);
+
+    _map.on(L.Draw.Event.CREATED, e => {
+      _fg.clearLayers(); _drawnPoly = e.layer; _fg.addLayer(e.layer);
+      onPolyCreated(e.layer.getLatLngs()[0]);
+    });
+    _map.on(L.Draw.Event.EDITED, () => {
+      _fg.eachLayer(l => { if (l instanceof L.Polygon) onPolyCreated(l.getLatLngs()[0]); });
+    });
+    _map.on(L.Draw.Event.DELETED, () => {
+      _drawnPoly = null; document.getElementById('area-box').style.display = 'none';
+      document.getElementById('leaflet-map').classList.remove('has-poly');
+    });
+  }
+  refreshSelects();
+}
+
+function onPolyCreated(latlngs) {
+  const flat = Array.isArray(latlngs[0]) ? latlngs.flat() : latlngs;
+  const sqm  = geoArea(flat.map(ll => ({ lat: ll.lat, lng: ll.lng })));
+  const ha   = sqm / 10000;
+  const acres = sqm / 4046.86;
+  const bigha = sqm / 2529.29;
+  document.getElementById('area-box').style.display = 'block';
+  document.getElementById('area-txt').textContent = ha.toFixed(3) + ' हेक्टेयर';
+  document.getElementById('area-sub-txt').textContent = `${acres.toFixed(2)} acres  |  ${bigha.toFixed(1)} बीघा`;
+  document.getElementById('leaflet-map').classList.add('has-poly');
+  toast(`Area: ${ha.toFixed(3)} ha`, 's');
+}
+
+function geoArea(coords) {
+  const R = 6378137; let area = 0;
+  for (let i = 0, j = coords.length - 1; i < coords.length; j = i++) {
+    const xi = coords[i].lng * Math.PI / 180, xj = coords[j].lng * Math.PI / 180;
+    const yi = coords[i].lat * Math.PI / 180, yj = coords[j].lat * Math.PI / 180;
+    area += (xj - xi) * (2 + Math.sin(yi) + Math.sin(yj));
+  }
+  return Math.abs(area * R * R / 2);
+}
+
+function startDraw() {
+  if (!_map || !L.Draw?.Polygon) return;
+  document.getElementById('mbtn-draw').classList.add('active');
+  new L.Draw.Polygon(_map, { shapeOptions: { color: '#16a34a', fillOpacity: 0.15 } }).enable();
+  toast('Map पर click करें — double-click से close करें', 's');
+}
+
+function deletePolygon() {
+  _fg?.clearLayers(); _drawnPoly = null;
+  document.getElementById('area-box').style.display = 'none';
+  document.getElementById('leaflet-map').classList.remove('has-poly');
+  document.getElementById('mbtn-draw').classList.remove('active');
+  toast('Polygon हटा दिया', 's');
+}
+
+function locateMe() {
+  getPos().then(p => {
+    _map.flyTo([p.lat, p.lng], 15);
+    L.circleMarker([p.lat, p.lng], { color: '#16a34a', radius: 8, fillColor: '#22c55e', fillOpacity: 0.8 }).addTo(_map).bindPopup('📡 आप यहाँ हैं').openPopup();
+    toast('Location found!', 's');
+  }).catch(() => toast('Location access denied', 'e'));
+}
+
+function toggleSat() {
+  if (!_satMode) { _map.removeLayer(_map._osm); _map._sat.addTo(_map); document.getElementById('mbtn-sat').classList.add('active'); }
+  else           { _map.removeLayer(_map._sat);  _map._osm.addTo(_map); document.getElementById('mbtn-sat').classList.remove('active'); }
+  _satMode = !_satMode;
+}
+
+function saveMapData() {
+  const farmerSel = document.getElementById('map-farmer-sel').value;
+  if (!_drawnPoly) { toast('पहले polygon draw करें', 'e'); return; }
+  const latlngs = _drawnPoly.getLatLngs()[0];
+  const flat    = Array.isArray(latlngs[0]) ? latlngs.flat() : latlngs;
+  const coords  = flat.map(ll => ({ lat: ll.lat, lng: ll.lng }));
+  const sqm     = geoArea(coords);
+  const mapData = DB.mapData;
+  const key     = farmerSel || 'default';
+  mapData[key]  = { coords, sqm, ha: sqm/10000, khasra: document.getElementById('map-khasra').value, saved_at: new Date().toISOString() };
+  DB.mapData    = mapData;
+  toast('✅ Field boundary saved!', 's');
+}
+
+/* ═══════════════════════════════════════════════════
+   PHOTOS
+═══════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('photo-inp');
+  if (inp) inp.addEventListener('change', handlePhotos);
+  const dz = document.getElementById('drop-zone');
+  if (dz) {
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); inp.files = e.dataTransfer.files; handlePhotos({target: inp}); });
+  }
+});
+
+async function handlePhotos(e) {
+  const files = Array.from(e.target.files).slice(0, 10 - _tmpPhotos.length);
+  for (const f of files) {
+    const b64 = await toB64(f);
+    let gps = null;
+    try { gps = await getPos(); } catch {}
+    _tmpPhotos.push({ id: Date.now() + Math.random(), filename: f.name, b64, lat: gps?.lat, lng: gps?.lng, ts: new Date().toISOString() });
+  }
+  renderPhotos();
+}
+
+function renderPhotos() {
+  const g = document.getElementById('photo-grid');
+  g.innerHTML = _tmpPhotos.map((p, i) => `
+    <div class="photo-thumb">
+      <img src="${p.b64}" alt="">
+      <button class="rm" onclick="removePhoto(${i})">✕</button>
+      ${p.lat ? `<div class="gps-tag">${p.lat.toFixed(3)},${p.lng.toFixed(3)}</div>` : ''}
+    </div>`).join('');
+}
+
+function removePhoto(i) { _tmpPhotos.splice(i, 1); renderPhotos(); }
+
+function savePhotos() {
+  if (!_tmpPhotos.length) { toast('Photos upload करें', 'e'); return; }
+  const farmerIdx = document.getElementById('photo-farmer-sel').value;
+  const type      = document.getElementById('photo-type').value;
+  const photos    = DB.photos;
+  _tmpPhotos.forEach(p => photos.push({ ...p, farmer_idx: farmerIdx, type, b64: p.b64.substring(0, 100) + '...' })); // truncate for storage
+  DB.photos = photos;
+  toast(`✅ ${_tmpPhotos.length} photos saved!`, 's');
+  _tmpPhotos = []; renderPhotos();
+}
+
+function toB64(file) {
+  return new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
+}
+
+/* ═══════════════════════════════════════════════════
+   REPORT
+═══════════════════════════════════════════════════ */
+function refreshSelects() {
+  const farmers = DB.farmers;
+  ['map-farmer-sel','photo-farmer-sel','rep-farmer-sel'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = `<option value="">Select Farmer</option>` +
+      farmers.map((f, i) => `<option value="${i}">${f.name} — ${f.village}</option>`).join('');
+    sel.value = cur;
+  });
+}
+
+function buildReport() {
+  const idx = document.getElementById('rep-farmer-sel').value;
+  if (idx === '') {
+    document.getElementById('report-content').style.display = 'none';
+    document.getElementById('report-empty').style.display = 'block';
+    return;
+  }
+  const f = DB.farmers[parseInt(idx)];
+  if (!f) return;
+  document.getElementById('report-content').style.display = 'block';
+  document.getElementById('report-empty').style.display = 'none';
+
+  document.getElementById('rep-co2').textContent = f.estimated_co2 || '0.000';
+  document.getElementById('rep-credit').textContent = `Est. Value: ₹ ${Math.round((f.estimated_co2 || 0) * 600).toLocaleString('en-IN')} (India CCTS @ ₹600/tCO₂e)`;
+  document.getElementById('rep-mrv-id').textContent = f.mrv_id;
+
+  document.getElementById('rep-meta').innerHTML = [
+    ['👤 Name', f.name], ['📱 Mobile', f.mobile],
+    ['🏘 Village', f.village], ['🗺 Block', f.block || '—'],
+    ['📍 District', f.district], ['🌾 Crop', f.crop || '—'],
+    ['📐 Area', `${f.area_bigha || 0} बीघा (${(f.area_ha||0).toFixed(2)} ha)`],
+    ['💧 Irrigation', f.irrigation || '—']
+  ].map(([l, v]) => `<div class="r-item"><div class="r-lbl">${l}</div><div class="r-val">${v}</div></div>`).join('');
+
+  document.getElementById('rep-interventions').innerHTML = (f.interventions || [])
+    .map(iv => `<span class="fbd fbd-green" style="font-size:0.75rem;padding:4px 10px">${iv}</span>`).join('') || '<span style="color:var(--muted);font-size:0.8rem">None selected</span>';
+
+  const mapData = DB.mapData[parseInt(idx)];
+  document.getElementById('rep-map-status').innerHTML = mapData
+    ? `✅ Field boundary: ${mapData.ha.toFixed(3)} ha · ${mapData.coords.length} vertices · ${new Date(mapData.saved_at).toLocaleDateString('hi-IN')}`
+    : `⚠️ Field boundary not yet mapped — Map tab पर जाएं`;
+}
+
+function exportPDF() {
+  const idx = document.getElementById('rep-farmer-sel').value;
+  if (idx === '') { toast('Farmer select करें', 'e'); return; }
+  const f = DB.farmers[parseInt(idx)];
+
+  const { jsPDF } = window.jspdf || {};
+  if (!jsPDF) { toast('PDF library loading...', 'e'); return; }
+  const doc = new jsPDF({ format: 'a4' });
+  const W = 210, M = 15;
+
+  doc.setFillColor(22, 163, 74);
+  doc.rect(0, 0, W, 50, 'F');
+  doc.setFontSize(20); doc.setTextColor(255,255,255); doc.setFont(undefined,'bold');
+  doc.text('MRV FIELD REPORT', W/2, 22, { align:'center' });
+  doc.setFontSize(10); doc.setFont(undefined,'normal');
+  doc.text('CHANGE TechLab · Agri Monitor Platform', W/2, 32, { align:'center' });
+  doc.text(`MRV ID: ${f.mrv_id}`, W/2, 42, { align:'center' });
+
+  let y = 62;
+  doc.setFillColor(245, 248, 245);
+  doc.rect(M, y, W-2*M, 55, 'F');
+  doc.setFontSize(9); doc.setTextColor(30,30,30);
+  const fields = [
+    ['Farmer Name', f.name], ['Mobile', f.mobile], ['Village', f.village],
+    ['Block/District', `${f.block||'—'} / ${f.district}`], ['Crop', f.crop||'—'],
+    ['Area', `${f.area_bigha} बीघा (${f.area_ha?.toFixed(2)} ha)`]
+  ];
+  fields.forEach(([l, v], i) => {
+    const x = M + (i % 2) * 90;
+    const cy = y + 8 + Math.floor(i/2) * 16;
+    doc.setTextColor(100,120,100); doc.setFontSize(8); doc.text(l, x + 4, cy);
+    doc.setTextColor(20,20,20); doc.setFontSize(9); doc.text(String(v), x + 4, cy + 6);
+  });
+
+  y += 62;
+  doc.setFontSize(12); doc.setTextColor(22,163,74); doc.setFont(undefined,'bold');
+  doc.text('Carbon Estimate', M, y); y += 8;
+  doc.setFontSize(11); doc.setTextColor(20,20,20); doc.setFont(undefined,'normal');
+  doc.text(`Gross tCO₂e/year: ${f.estimated_co2}`, M+4, y); y += 8;
+  doc.text(`Interventions: ${(f.interventions||[]).join(', ')||'None'}`, M+4, y); y += 8;
+  doc.text(`Est. Credit Value (India CCTS): Rs. ${Math.round((f.estimated_co2||0)*600).toLocaleString()}`, M+4, y); y += 14;
+
+  doc.setFontSize(8); doc.setTextColor(130,130,130);
+  doc.text(`Generated: ${new Date().toLocaleString('en-IN')} | Agri Monitor Demo v1.0`, M, 285);
+
+  doc.save(`${f.mrv_id}_Report.pdf`);
+  toast('✅ PDF downloaded!', 's');
+}
+
+function exportJSON() {
+  const idx = document.getElementById('rep-farmer-sel').value;
+  if (idx === '') { toast('Farmer select करें', 'e'); return; }
+  const f = DB.farmers[parseInt(idx)];
+  const blob = new Blob([JSON.stringify(f, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: url, download: `${f.mrv_id}.json` });
+  a.click(); setTimeout(() => URL.revokeObjectURL(url), 500);
+  toast('✅ JSON downloaded!', 's');
+}
+
+function exportGeoJSON() {
+  const idx = document.getElementById('rep-farmer-sel').value;
+  if (idx === '') { toast('Farmer select करें', 'e'); return; }
+  const mapData = DB.mapData[parseInt(idx)];
+  const f = DB.farmers[parseInt(idx)];
+  if (!mapData) { toast('Map पर field boundary draw करें पहले', 'e'); return; }
+  const gj = { type:'FeatureCollection', features: [{ type:'Feature', properties:{ mrv_id: f.mrv_id, farmer: f.name, area_ha: mapData.ha }, geometry:{ type:'Polygon', coordinates: [mapData.coords.map(c=>[c.lng,c.lat])] } }] };
+  const blob = new Blob([JSON.stringify(gj,null,2)], { type:'application/geo+json' });
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: url, download: `${f.mrv_id}_boundary.geojson` });
+  a.click(); setTimeout(() => URL.revokeObjectURL(url), 500);
+  toast('✅ GeoJSON downloaded!', 's');
+}
+
+/* ═══════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════ */
+function toast(msg, type = 's') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show ' + type;
+  setTimeout(() => t.className = '', 3200);
+}
+
+/* ═══════════════════════════════════════════════════
+   BOOT
+═══════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  refreshDashboard();
+});
+</script>
+
+</body>
+</html>
