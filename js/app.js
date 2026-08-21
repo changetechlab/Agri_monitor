@@ -153,6 +153,10 @@ window.AgriApp = (() => {
     if (window.AgriCLF)    AgriCLF.init(state.clf_clusters);
     if (window.AgriUpload) AgriUpload.init();
     if (window.AgriVillages) window.AgriVillages.init();
+    // CRA Plan module
+    if (window.CRA) {
+      try { window.CRA.initCRATab(); } catch(e) { console.warn('[App] CRA init failed:', e); }
+    }
     renderDashboardStats();
   }
 
@@ -212,6 +216,10 @@ window.AgriApp = (() => {
     document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
+    // Mobile bottom nav
+    document.querySelectorAll('.mobile-nav-btn[data-tab]').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
   }
 
   function switchTab(tabId) {
@@ -219,7 +227,8 @@ window.AgriApp = (() => {
       b.classList.toggle('active', b.dataset.tab === tabId);
       b.setAttribute('aria-selected', b.dataset.tab === tabId);
     });
-    document.querySelectorAll('.tab-content').forEach(panel => {
+    // Support both .tab-content and .tab-panel class names
+    document.querySelectorAll('.tab-content, .tab-panel').forEach(panel => {
       const active = panel.id === `tab-${tabId}`;
       panel.style.display = active ? 'flex' : 'none';
       panel.classList.toggle('active', active);
@@ -230,6 +239,12 @@ window.AgriApp = (() => {
       AgriNDVI.renderColorLegend();
       AgriCharts.renderCropDistribution(state.fields);
     }
+    // Fire event for CRA tab (mini-map invalidation)
+    document.dispatchEvent(new CustomEvent('tabChanged', { detail: { tab: tabId } }));
+    // Mobile nav sync
+    document.querySelectorAll('.mobile-nav-btn[data-tab]').forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === tabId);
+    });
   }
 
   // ── Sidebar toggle (desktop collapse / mobile overlay) ────

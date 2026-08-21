@@ -245,6 +245,7 @@ img { max-width: 100%; }
 /* Tab Navigation */
 .tab-nav {
   display: flex;
+  flex-wrap: wrap;
   background: var(--bg-tertiary);
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
@@ -257,17 +258,18 @@ img { max-width: 100%; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 8px 10px;
-  font-size: 10px;
+  gap: 1px;
+  padding: 6px 8px;
+  font-size: 9px;
   color: var(--text-muted);
   white-space: nowrap;
-  min-width: 50px;
+  min-width: 44px;
+  flex: 1;
   transition: all var(--transition);
   position: relative;
   border-bottom: 2px solid transparent;
 }
-.tab-btn .tab-icon { font-size: 16px; }
+.tab-btn .tab-icon { font-size: 15px; }
 .tab-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
 .tab-btn.active { color: var(--green); border-bottom-color: var(--green); background: rgba(34,197,94,0.05); }
 .tab-btn .badge {
@@ -1655,3 +1657,286 @@ img { max-width: 100%; }
 }
 
 
+/* ═══════════════════════════════════════════════════════════
+   CRA PLAN MODULE STYLES
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Progress Steps ──────────────────────────────────────── */
+.cra-progress-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin: 12px 0 16px;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.cra-step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.cra-step-item span {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.cra-step-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+.cra-step-dot.active {
+  background: var(--green-dark);
+  border-color: var(--green);
+  color: white;
+  box-shadow: 0 0 8px rgba(22, 163, 74, 0.4);
+}
+.cra-step-dot.done {
+  background: var(--green);
+  border-color: var(--green);
+  color: white;
+}
+.cra-step-line {
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+  margin: 0 6px;
+  margin-bottom: 14px;
+  min-width: 20px;
+}
+
+/* ── Select Card ─────────────────────────────────────────── */
+.cra-select-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+/* ── GP Profile Card ─────────────────────────────────────── */
+.cra-profile-card {
+  background: linear-gradient(135deg, rgba(22,163,74,0.06), rgba(20,184,166,0.04));
+  border: 1px solid rgba(22, 163, 74, 0.25);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.cra-profile-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.cra-profile-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green);
+  margin: 0 0 4px;
+}
+.cra-profile-subtitle {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.cra-profile-tag {
+  background: var(--green-dark);
+  color: white;
+  font-size: 9px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.cra-profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.cra-profile-item {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cra-pi-label {
+  font-size: 9.5px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.cra-pi-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.cra-pi-sub {
+  font-size: 9px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+.cra-hazard-row,
+.cra-existing-row,
+.cra-crop-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  font-size: 11px;
+}
+.cra-hazard-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.cra-hazard-chip {
+  background: rgba(239,68,68,0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.cra-crop-chip {
+  background: rgba(22,163,74,0.15);
+  color: var(--green);
+  border: 1px solid rgba(22,163,74,0.3);
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+/* ── CRA Score Table ─────────────────────────────────────── */
+.cra-scores-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+}
+.cra-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green);
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cra-score-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.cra-score-table thead tr {
+  border-bottom: 1px solid var(--border);
+}
+.cra-score-table th {
+  text-align: left;
+  padding: 4px 6px;
+  font-size: 9.5px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.cra-score-row {
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  transition: background 0.15s;
+}
+.cra-score-row:hover { background: var(--bg-tertiary); }
+.cra-score-table td { padding: 6px 6px; vertical-align: middle; }
+.cra-score-indicator { font-size: 11px; color: var(--text-primary); font-weight: 500; }
+.cra-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.cra-badge-high   { background: rgba(239,68,68,0.15);  color: #ef4444; }
+.cra-badge-medium { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.cra-badge-low    { background: rgba(34,197,94,0.15);  color: #22c55e; }
+
+.cra-overall-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border: 2px solid;
+  border-radius: 8px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cra-overall-label { font-size: 11px; font-weight: 700; color: var(--text-primary); }
+.cra-overall-val   { font-size: 13px; font-weight: 800; }
+
+/* ── CRA Map ─────────────────────────────────────────────── */
+.cra-map-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+/* ── Intervention Cards ──────────────────────────────────── */
+.cra-interventions-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.cra-int-count { font-size: 11px; color: var(--text-muted); margin: 0 0 10px; }
+.cra-int-list  { display: flex; flex-direction: column; gap: 8px; }
+.cra-int-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition: border-color 0.2s, transform 0.15s;
+}
+.cra-int-card:hover { border-color: rgba(22,163,74,0.4); transform: translateY(-1px); }
+.cra-int-top { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+.cra-int-icon { font-size: 20px; flex-shrink: 0; line-height: 1.2; }
+.cra-int-meta { flex: 1; }
+.cra-int-name { font-size: 12px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
+.cra-int-en   { font-size: 9.5px; color: var(--text-muted); margin-top: 1px; }
+.cra-int-cat  { padding: 2px 8px; border-radius: 10px; font-size: 9px; font-weight: 700; flex-shrink: 0; align-self: flex-start; }
+.cra-int-desc    { font-size: 10.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 5px; }
+.cra-int-benefit { font-size: 10px; color: var(--teal); font-weight: 600; }
+
+/* ── CRA map section show when interventions visible ─────── */
+#cra-interventions-section:not([style*="none"]) ~ #cra-map-section,
+#cra-scores-section:not([style*="display: none"]) + #cra-map-section {
+  display: block;
+}

@@ -1,0 +1,702 @@
+/**
+ * Agri Monitor — js/cra-report.js
+ * ─────────────────────────────────────────────────────────────
+ * Purpose  : Generate a professional A3-landscape CRA Plan
+ *            report in a new browser tab (print → PDF).
+ *            Modelled after UCRRFP / CHANGE TechLab style.
+ * Depends  : GP_CRA_DATA, CRA scoring engine (window.CRA)
+ * Exposes  : window.CRAReport.generate(gp, scores, interventions)
+ */
+
+window.CRAReport = (() => {
+
+  /* ── Slope distribution by GP slope category ─────────────── */
+  function buildSlopeData(gp) {
+    const s = gp.slope;
+    const total = gp.agri_area_ha;
+    if (s === 'very_steep') {
+      return [
+        { label: '0–5° (Very Gentle)', pct: 5,  ha: Math.round(total*0.05), color: '#22c55e' },
+        { label: '5–15° (Gentle)',     pct: 10, ha: Math.round(total*0.10), color: '#84cc16' },
+        { label: '15–30° (Moderate)',  pct: 20, ha: Math.round(total*0.20), color: '#facc15' },
+        { label: '30–45° (Steep)',     pct: 34, ha: Math.round(total*0.34), color: '#f97316' },
+        { label: '>45° (Very Steep)',  pct: 31, ha: Math.round(total*0.31), color: '#ef4444' },
+      ];
+    } else if (s === 'steep') {
+      return [
+        { label: '0–5° (Very Gentle)', pct: 10, ha: Math.round(total*0.10), color: '#22c55e' },
+        { label: '5–15° (Gentle)',     pct: 22, ha: Math.round(total*0.22), color: '#84cc16' },
+        { label: '15–30° (Moderate)',  pct: 34, ha: Math.round(total*0.34), color: '#facc15' },
+        { label: '30–45° (Steep)',     pct: 25, ha: Math.round(total*0.25), color: '#f97316' },
+        { label: '>45° (Very Steep)',  pct: 9,  ha: Math.round(total*0.09), color: '#ef4444' },
+      ];
+    } else {
+      return [
+        { label: '0–5° (Very Gentle)', pct: 20, ha: Math.round(total*0.20), color: '#22c55e' },
+        { label: '5–15° (Gentle)',     pct: 35, ha: Math.round(total*0.35), color: '#84cc16' },
+        { label: '15–30° (Moderate)',  pct: 30, ha: Math.round(total*0.30), color: '#facc15' },
+        { label: '30–45° (Steep)',     pct: 12, ha: Math.round(total*0.12), color: '#f97316' },
+        { label: '>45° (Very Steep)',  pct: 3,  ha: Math.round(total*0.03), color: '#ef4444' },
+      ];
+    }
+  }
+
+  /* ── NDVI zone percentages from avg_ndvi ─────────────────── */
+  function buildNDVIZones(gp) {
+    const n = gp.avg_ndvi;
+    if (n < 0.3) {
+      return { high: 45, moderate: 35, low: 14, water: 6 };
+    } else if (n < 0.45) {
+      return { high: 25, moderate: 40, low: 28, water: 7 };
+    } else if (n < 0.6) {
+      return { high: 10, moderate: 35, low: 45, water: 10 };
+    } else {
+      return { high: 5, moderate: 20, low: 62, water: 13 };
+    }
+  }
+
+  /* ── Score badge HTML ────────────────────────────────────── */
+  function scoreBadge(level) {
+    const map = {
+      High:   { color: '#ef4444', bg: '#fef2f2', dot: '🔴' },
+      Medium: { color: '#f59e0b', bg: '#fffbeb', dot: '🟡' },
+      Low:    { color: '#22c55e', bg: '#f0fdf4', dot: '🟢' },
+    };
+    const s = map[level] || map.Low;
+    return `<span style="background:${s.bg};color:${s.color};padding:2px 10px;border-radius:20px;font-weight:700;font-size:11px;border:1px solid ${s.color}40">${s.dot} ${level}</span>`;
+  }
+
+  /* ── Intervention icon map ───────────────────────────────── */
+  const INT_ICONS = {
+    farm_pond:'🪣', springshed:'💧', awd:'🌊', mulching:'🌿',
+    crop_diversification:'🌾', millet_promotion:'🌾', contour_bunds:'〰️',
+    agroforestry:'🌳', biochar:'⬛', soc_enhancement:'🌱',
+    check_dams:'🪨', polyhouse:'🏠',
+  };
+
+  /* ── Donut SVG chart (no external lib needed) ────────────── */
+  function donutSVG(slices, cx, cy, r) {
+    let total = slices.reduce((s, d) => s + d.pct, 0);
+    let angle = -Math.PI / 2;
+    let paths = '';
+    for (const d of slices) {
+      const sweep = (d.pct / total) * 2 * Math.PI;
+      const x1 = cx + r * Math.cos(angle);
+      const y1 = cy + r * Math.sin(angle);
+      const x2 = cx + r * Math.cos(angle + sweep);
+      const y2 = cy + r * Math.sin(angle + sweep);
+      const lf = sweep > Math.PI ? 1 : 0;
+      const inner = r * 0.52;
+      const xi1 = cx + inner * Math.cos(angle);
+      const yi1 = cy + inner * Math.sin(angle);
+      const xi2 = cx + inner * Math.cos(angle + sweep);
+      const yi2 = cy + inner * Math.sin(angle + sweep);
+      paths += `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${lf},1 ${x2.toFixed(1)},${y2.toFixed(1)} L${xi2.toFixed(1)},${yi2.toFixed(1)} A${inner},${inner} 0 ${lf},0 ${xi1.toFixed(1)},${yi1.toFixed(1)} Z" fill="${d.color}" stroke="white" stroke-width="1.5"/>`;
+      angle += sweep;
+    }
+    return paths;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     MAIN REPORT HTML GENERATOR
+  ══════════════════════════════════════════════════════════ */
+  function buildHTML(gp, scores, interventions) {
+    const slope  = buildSlopeData(gp);
+    const zones  = buildNDVIZones(gp);
+    const today  = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+    const slopeSVG = donutSVG(slope, 90, 90, 75);
+
+    const overallColor = scores.overall === 'High' ? '#ef4444'
+                       : scores.overall === 'Medium' ? '#f59e0b' : '#22c55e';
+
+    const interventionCards = interventions.slice(0, 8).map(iv => `
+      <div class="int-card">
+        <div class="int-icon">${iv.icon || INT_ICONS[iv.id] || '🌿'}</div>
+        <div class="int-body">
+          <div class="int-name">${iv.name_hindi || iv.name}</div>
+          <div class="int-en">${iv.name}</div>
+          <div class="int-ben">✅ <b>लाभ:</b> ${iv.benefit || ''}</div>
+          ${iv.mrv_kpi ? `<div class="int-mrv" style="margin-top: 3px; font-size: 8px; color: #4b5563; background: #f3f4f6; padding: 3px; border-radius: 3px;"><b>KPI:</b> ${iv.mrv_kpi}</div>` : ''}
+          ${iv.evidence ? `<div class="int-evidence" style="font-size: 8px; color: #6b7280; margin-top: 1px;"><b>Source:</b> ${iv.evidence}</div>` : ''}
+        </div>
+      </div>`).join('');
+
+    const scoreRows = [
+      ['🌾 Crop Stress (NDVI)',    scores.cropStress],
+      ['💧 Water Stress',          scores.waterStress],
+      ['⛰️ Slope / Erosion Risk',  scores.slopeErosion],
+      ['🌊 Drainage Risk',         scores.drainage],
+      ['🌩️ Climate Hazard',        scores.climateHazard],
+      ['🌱 Agriculture Potential', scores.agriPotential],
+    ].map(([label, val]) => `
+      <tr>
+        <td class="sc-label">${label}</td>
+        <td>${scoreBadge(val)}</td>
+        <td class="sc-bar-cell"><div class="sc-bar" style="width:${val==='High'?90:val==='Medium'?55:25}%;background:${val==='High'?'#ef4444':val==='Medium'?'#f59e0b':'#22c55e'}"></div></td>
+      </tr>`).join('');
+
+    const villageMarkers = gp.villages.map((v, i) => `
+      L.circleMarker([${gp.lat + (i*0.008 - 0.02)}, ${gp.lng + (i*0.006 - 0.015)}], {
+        radius: 6, fillColor: '#1e40af', color: '#fff', weight: 2,
+        fillOpacity: 0.9
+      }).bindPopup('<b>${v}</b><br>Village').addTo(craReportMap);`).join('\n');
+
+    const waterMarkers = gp.water_sources.map((ws, i) => `
+      L.marker([${gp.lat + (i*0.01 - 0.01)}, ${gp.lng + (i*0.012 + 0.01)}], {
+        icon: L.divIcon({ html: '💧', className: '', iconSize: [20,20], iconAnchor:[10,10] })
+      }).bindPopup('<b>${ws}</b>').addTo(craReportMap);`).join('\n');
+
+    const zoneRadius = Math.sqrt((gp.agri_area_ha * 10000) / Math.PI);
+
+    return `<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<title>CRA Plan — ${gp.name_hindi} | ${gp.block_hindi} | Rudraprayag</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background:#f5f5f5; color:#1a1a1a; font-size:11px; }
+
+  /* ── Page layout ──────────────────────────────────── */
+  .page {
+    width: 420mm;
+    min-height: 297mm;
+    background: white;
+    margin: 0 auto;
+    display: grid;
+    grid-template-rows: auto 1fr auto auto auto auto;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  }
+
+  /* ── Header ────────────────────────────────────────── */
+  .hdr {
+    background: linear-gradient(135deg, #14532d 0%, #166534 50%, #0f766e 100%);
+    color: white;
+    padding: 10px 18px;
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    align-items: center;
+    gap: 12px;
+  }
+  .hdr-logo {
+    width: 52px; height: 52px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+  }
+  .hdr-title { line-height: 1.3; }
+  .hdr-title h1 {
+    font-size: 15px; font-weight: 800; letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .hdr-title h2 { font-size: 11px; font-weight: 400; opacity: 0.85; margin-top: 2px; }
+  .hdr-sub {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 10px;
+    text-align: right;
+    line-height: 1.6;
+  }
+  .hdr-sub b { font-size: 12px; display: block; }
+
+  /* Sub-header: GP name band */
+  .gp-band {
+    background: #15803d;
+    color: white;
+    text-align: center;
+    padding: 5px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+  .gp-band span { font-weight: 400; font-size: 11px; opacity: 0.9; margin-left: 12px; }
+
+  /* ── Main map + info row ────────────────────────────── */
+  .map-info-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 0;
+    height: 260px;
+  }
+  #craReportMap { width: 100%; height: 260px; }
+
+  .info-panel {
+    background: #f9fafb;
+    border-left: 3px solid #16a34a;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+  }
+  .info-section {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .info-section h4 {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #15803d;
+    margin-bottom: 6px;
+  }
+
+  /* Legend */
+  .legend-item { display: flex; align-items: center; gap: 6px; margin: 3px 0; font-size: 9.5px; }
+  .legend-box { width: 14px; height: 10px; border-radius: 2px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.15); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* CRA Priority Zones */
+  .zone-item { display: flex; gap: 6px; margin: 3px 0; align-items: flex-start; }
+  .zone-box { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; margin-top: 1px; }
+  .zone-text { font-size: 9px; line-height: 1.3; }
+  .zone-name { font-weight: 700; }
+  .zone-desc { color: #6b7280; font-size: 8.5px; }
+
+  /* Location inset */
+  .location-box {
+    margin-top: auto;
+    background: #1e3a5f;
+    color: white;
+    padding: 6px 10px;
+    font-size: 9px;
+  }
+  .location-box b { font-size: 10px; display: block; margin-bottom: 2px; }
+
+  /* ── GP At A Glance ─────────────────────────────────── */
+  .stats-bar {
+    background: #14532d;
+    color: white;
+    padding: 3px 12px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-bottom: 2px solid #16a34a;
+  }
+  .stat-cell {
+    padding: 8px 6px;
+    text-align: center;
+    border-right: 1px solid #e5e7eb;
+    background: #f0fdf4;
+  }
+  .stat-cell:last-child { border-right: none; }
+  .stat-icon { font-size: 16px; display: block; margin-bottom: 2px; }
+  .stat-val { font-size: 13px; font-weight: 800; color: #14532d; display: block; }
+  .stat-label { font-size: 8.5px; color: #6b7280; display: block; margin-top: 1px; }
+
+  /* ── Analysis row ───────────────────────────────────── */
+  .analysis-row {
+    display: grid;
+    grid-template-columns: 195px 1fr;
+    gap: 0;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  /* Slope */
+  .slope-panel {
+    padding: 10px 12px;
+    border-right: 1px solid #e5e7eb;
+    background: #fefefe;
+  }
+  .slope-panel h4 { font-size: 10px; font-weight: 700; color: #14532d; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .slope-chart-wrap { display: flex; align-items: center; gap: 10px; }
+  .slope-legend { flex: 1; }
+  .slope-leg-item { display: flex; align-items: center; gap: 5px; margin: 3px 0; font-size: 9px; }
+  .slope-leg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .slope-leg-pct { margin-left: auto; font-weight: 700; color: #374151; }
+
+  /* CRA Scores */
+  .scores-panel {
+    padding: 10px 12px;
+    background: #fefefe;
+  }
+  .scores-panel h4 { font-size: 10px; font-weight: 700; color: #14532d; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .sc-table { width: 100%; border-collapse: collapse; }
+  .sc-table tr { border-bottom: 1px solid #f3f4f6; }
+  .sc-table tr:hover { background: #f9fafb; }
+  .sc-label { padding: 5px 4px; font-size: 10px; color: #374151; }
+  .sc-bar-cell { width: 120px; padding: 5px 4px; }
+  .sc-bar { height: 8px; border-radius: 4px; transition: width 0.3s; }
+  .overall-row {
+    margin-top: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 700;
+    border: 2px solid ${overallColor};
+    background: ${overallColor}15;
+  }
+  .overall-label { font-size: 11px; }
+  .overall-val { font-size: 14px; color: ${overallColor}; }
+
+  /* ── Interventions ──────────────────────────────────── */
+  .int-bar {
+    background: #0f766e;
+    color: white;
+    padding: 3px 12px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .int-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 10px 12px;
+    background: #f0fdf9;
+  }
+  .int-card {
+    background: white;
+    border: 1px solid #d1fae5;
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    gap: 7px;
+    align-items: flex-start;
+  }
+  .int-icon { font-size: 18px; flex-shrink: 0; line-height: 1; }
+  .int-body { flex: 1; }
+  .int-name { font-size: 9.5px; font-weight: 700; color: #14532d; line-height: 1.3; }
+  .int-en { font-size: 8.5px; color: #6b7280; }
+  .int-ben { font-size: 8.5px; color: #0f766e; margin-top: 2px; font-weight: 600; }
+
+  /* ── Footer ─────────────────────────────────────────── */
+  .footer {
+    background: #1e3a5f;
+    color: white;
+    padding: 6px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 8.5px;
+  }
+  .footer-left { opacity: 0.8; line-height: 1.6; }
+  .footer-right { text-align: right; opacity: 0.9; line-height: 1.6; }
+
+  /* ── NDVI badge row ─────────────────────────────────── */
+  .ndvi-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .ndvi-cell {
+    padding: 4px 6px;
+    text-align: center;
+    font-size: 9px;
+    font-weight: 600;
+    color: white;
+  }
+
+  /* ── Print ──────────────────────────────────────────── */
+  @media print {
+    body { background: white; }
+    .page { box-shadow: none; width: 100%; }
+    .no-print { display: none !important; }
+    @page { size: A3 landscape; margin: 6mm; }
+  }
+  .print-btn {
+    position: fixed; top: 16px; right: 16px; z-index: 9999;
+    background: #16a34a; color: white; border: none; border-radius: 8px;
+    padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .print-btn:hover { background: #15803d; }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">🖨️ Print / Save PDF</button>
+
+<div class="page">
+
+  <!-- ══ HEADER ══════════════════════════════════════════ -->
+  <div class="hdr">
+    <div class="hdr-logo">🌱</div>
+    <div class="hdr-title">
+      <h1>Participatory Gram Panchayat–Level Climate Resilient Agriculture (CRA) Plan</h1>
+      <h2>Uttarakhand Climate Resilient Rainfed Farming Project (UCRRFP) — CHANGE TechLab Agri Monitor</h2>
+    </div>
+    <div class="hdr-sub">
+      <b>🗓️ ${today}</b>
+      Sub-District: ${gp.block_hindi}<br>
+      District: रुद्रप्रयाग | Code: 54
+    </div>
+  </div>
+
+  <!-- GP Name Band -->
+  <div class="gp-band">
+    Sentinel-2 Based Demo Map — ${gp.name_hindi}
+    <span>Block ${gp.block_hindi}, District Rudraprayag, Uttarakhand</span>
+  </div>
+
+  <!-- ══ MAP + INFO PANEL ══════════════════════════════ -->
+  <div class="map-info-row">
+    <div id="craReportMap"></div>
+
+    <div class="info-panel">
+      <!-- NDVI Legend -->
+      <div class="info-section">
+        <h4>🗺️ Legend</h4>
+        <div class="legend-item"><div class="legend-box" style="background:#1a5276"></div> GP Boundary</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#1e40af"></div> Settlements / Villages</div>
+        <div class="legend-item"><div class="legend-box" style="background:#3b82f6;width:20px;height:4px"></div> Stream / Drainage</div>
+        <div class="legend-item" style="margin-top:6px"><b style="font-size:9px;color:#374151">NDVI (Vegetation Health)</b></div>
+        <div class="legend-item"><div class="legend-box" style="background:#166534"></div> 0.6–1.0 (Very Good)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#86efac"></div> 0.4–0.6 (Good)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#fde68a"></div> 0.2–0.4 (Moderate)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#fb923c"></div> 0.0–0.2 (Poor)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#dc2626"></div> -0.3–0.0 (Very Poor)</div>
+      </div>
+
+      <!-- CRA Priority Zones -->
+      <div class="info-section">
+        <h4>CRA Priority Zones</h4>
+        <div class="zone-item">
+          <div class="zone-box" style="background:#ef4444"></div>
+          <div class="zone-text"><div class="zone-name">High Risk / Degraded</div><div class="zone-desc">Low NDVI + High Slope + Erosion<br>Priority: Soil & Moisture Conservation</div></div>
+        </div>
+        <div class="zone-item">
+          <div class="zone-box" style="background:#f59e0b"></div>
+          <div class="zone-text"><div class="zone-name">Moderate Risk Zone</div><div class="zone-desc">Moderate NDVI + Rainfed Area<br>Priority: Crop Diversification, Mulching</div></div>
+        </div>
+        <div class="zone-item">
+          <div class="zone-box" style="background:#22c55e"></div>
+          <div class="zone-text"><div class="zone-name">Low Risk / Potential</div><div class="zone-desc">Higher NDVI + Moderate Slope<br>Priority: Climate-smart Intensification</div></div>
+        </div>
+        <div class="zone-item">
+          <div class="zone-box" style="background:#3b82f6"></div>
+          <div class="zone-text"><div class="zone-name">Water Conservation</div><div class="zone-desc">Springs + Drainage lines<br>Priority: Water Harvesting Structures</div></div>
+        </div>
+      </div>
+
+      <!-- Proposed Interventions mini -->
+      <div class="info-section">
+        <h4>🎯 Proposed Interventions</h4>
+        ${interventions.slice(0,5).map(iv=>`<div style="font-size:9px;padding:2px 0;color:#374151">${INT_ICONS[iv.id]||'🌿'} ${iv.name_hindi||iv.name}</div>`).join('')}
+      </div>
+
+      <!-- Location inset -->
+      <div class="location-box">
+        <b>📍 Location Map</b>
+        Uttarakhand → Rudraprayag Dist.<br>
+        Block: ${gp.block_hindi}<br>
+        GP: ${gp.name_hindi}<br>
+        📌 ${gp.lat.toFixed(4)}°N, ${gp.lng.toFixed(4)}°E
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ GP AT A GLANCE ════════════════════════════════ -->
+  <div class="stats-bar">📊 GP At A Glance</div>
+  <div class="stats-row">
+    <div class="stat-cell"><span class="stat-icon">🗺️</span><span class="stat-val">${Math.round(gp.agri_area_ha * 3.6)} ha</span><span class="stat-label">Total Area (est.)</span></div>
+    <div class="stat-cell"><span class="stat-icon">🏘️</span><span class="stat-val">${gp.village_count}</span><span class="stat-label">Villages</span></div>
+    <div class="stat-cell"><span class="stat-icon">🌾</span><span class="stat-val">${gp.agri_area_ha} ha</span><span class="stat-label">Agricultural Area</span></div>
+    <div class="stat-cell"><span class="stat-icon">🌳</span><span class="stat-val">${gp.land_use.forest_pct}%</span><span class="stat-label">Forest Cover</span></div>
+    <div class="stat-cell"><span class="stat-icon">🛰️</span><span class="stat-val">${gp.avg_ndvi}</span><span class="stat-label">Avg. NDVI</span></div>
+    <div class="stat-cell"><span class="stat-icon">🌧️</span><span class="stat-val">${gp.avg_rainfall_mm} mm</span><span class="stat-label">Rainfall (Avg.)</span></div>
+    <div class="stat-cell"><span class="stat-icon">🌱</span><span class="stat-val">${(gp.primary_crops||[]).slice(0,2).join(', ')}</span><span class="stat-label">Dominant Crops</span></div>
+  </div>
+
+  <!-- ══ NDVI ZONE BAR ════════════════════════════════ -->
+  <div class="ndvi-row">
+    <div class="ndvi-cell" style="background:#dc2626">🔴 High Risk<br>${zones.high}% area</div>
+    <div class="ndvi-cell" style="background:#f59e0b">🟡 Moderate<br>${zones.moderate}% area</div>
+    <div class="ndvi-cell" style="background:#16a34a">🟢 Low Risk<br>${zones.low}% area</div>
+    <div class="ndvi-cell" style="background:#2563eb">💧 Water Zone<br>${zones.water}% area</div>
+    <div class="ndvi-cell" style="background:${overallColor}">⚠️ Overall CRA<br>${scores.overall} Priority</div>
+  </div>
+
+  <!-- ══ SLOPE + SCORES ════════════════════════════════ -->
+  <div class="analysis-row">
+    <div class="slope-panel">
+      <h4>⛰️ Slope Analysis (from DEM — SRTM 30m)</h4>
+      <div class="slope-chart-wrap">
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          ${slopeSVG}
+          <text x="90" y="84" text-anchor="middle" font-size="11" fill="#374151" font-weight="700">${gp.elevation_m}m</text>
+          <text x="90" y="99" text-anchor="middle" font-size="9" fill="#6b7280">Elevation</text>
+        </svg>
+        <div class="slope-legend">
+          ${slope.map(d => `
+          <div class="slope-leg-item">
+            <div class="slope-leg-dot" style="background:${d.color}"></div>
+            <span style="font-size:8.5px;color:#374151">${d.label.split('(')[0]}</span>
+            <span class="slope-leg-pct">${d.pct}%</span>
+          </div>
+          <div style="font-size:8px;color:#9ca3af;margin-left:15px;margin-top:-2px;margin-bottom:1px">${d.ha} ha</div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="scores-panel">
+      <h4>📊 CRA Priority Scores — ${gp.name_hindi}</h4>
+      <table class="sc-table">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:4px;font-size:9px;color:#6b7280;font-weight:600">Indicator</th>
+            <th style="text-align:left;padding:4px;font-size:9px;color:#6b7280;font-weight:600">Priority</th>
+            <th style="text-align:left;padding:4px;font-size:9px;color:#6b7280;font-weight:600">Severity</th>
+          </tr>
+        </thead>
+        <tbody>${scoreRows}</tbody>
+      </table>
+      <div class="overall-row">
+        <span class="overall-label">🎯 Overall CRA Priority</span>
+        <span class="overall-val">${scores.overall} Risk</span>
+      </div>
+
+      <!-- Hazards row -->
+      <div style="margin-top:8px;font-size:9.5px">
+        <b style="color:#374151">⚠️ Climate Hazards: </b>
+        ${(gp.climate_hazards||[]).map(h=>`<span style="background:#fef2f2;color:#dc2626;padding:1px 7px;border-radius:10px;font-size:9px;margin-right:3px;border:1px solid #fecaca">${h}</span>`).join('')}
+      </div>
+      <div style="margin-top:5px;font-size:9.5px">
+        <b style="color:#374151">💧 Water Sources: </b>
+        ${(gp.water_sources||[]).map(w=>`<span style="background:#eff6ff;color:#1d4ed8;padding:1px 7px;border-radius:10px;font-size:9px;margin-right:3px;border:1px solid #bfdbfe">${w}</span>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ INTERVENTIONS ════════════════════════════════ -->
+  <div class="int-bar">🎯 Proposed CRA Interventions (Spatially Suggested — ${interventions.length} total)</div>
+  <div class="int-grid">${interventionCards}</div>
+
+  <!-- ══ FOOTER ═══════════════════════════════════════ -->
+  <div class="footer">
+    <div class="footer-left">
+      <b>DATA INTEGRATION:</b> Sentinel-2 (10m) Simulated | DEM: SRTM 30m | LGD Village Data | GP Baseline Survey<br>
+      ⚠️ This is a participatory planning document. Field verification recommended before implementation.
+    </div>
+    <div class="footer-right">
+      <b>CHANGE TechLab — Agri Monitor</b><br>
+      Generated: ${today} | GP Code: ${gp.gp_code || 'N/A'} | Sub-District: ${gp.sub_district_code}
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+  // ── Initialize Leaflet Map ──────────────────────────
+  const craReportMap = L.map('craReportMap', {
+    center: [${gp.lat}, ${gp.lng}],
+    zoom: 13,
+    zoomControl: true,
+    attributionControl: false,
+  });
+
+  // Base tile
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18, opacity: 0.75
+  }).addTo(craReportMap);
+
+  // Terrain tile overlay (subtle)
+  L.tileLayer('https://stamen-tiles.a.ssl.fastly.net/terrain-background/{z}/{x}/{y}.png', {
+    maxZoom: 18, opacity: 0.25
+  }).addTo(craReportMap);
+
+  const gpLat = ${gp.lat};
+  const gpLng = ${gp.lng};
+  const ndvi  = ${gp.avg_ndvi};
+  const agriHa = ${gp.agri_area_ha};
+
+  // ── NDVI Zone polygons (approximated circles) ─────
+  const highRiskRadius  = Math.sqrt((agriHa * ${zones.high/100}  * 10000) / Math.PI);
+  const modRiskRadius   = Math.sqrt((agriHa * ${(zones.high+zones.moderate)/100} * 10000) / Math.PI);
+  const lowRiskRadius   = Math.sqrt((agriHa * ${(zones.high+zones.moderate+zones.low)/100} * 10000) / Math.PI);
+
+  // Water zone (bottom of GP)
+  L.circle([gpLat - 0.012, gpLng + 0.008], {
+    radius: Math.sqrt(agriHa * ${zones.water/100} * 10000 / Math.PI),
+    fillColor: '#3b82f6', color: '#1d4ed8', weight: 1.5,
+    fillOpacity: 0.35
+  }).bindPopup('<b>💧 Water Conservation Zone</b><br>Springs & Drainage Lines').addTo(craReportMap);
+
+  // Low Risk
+  L.circle([gpLat + 0.008, gpLng - 0.005], {
+    radius: lowRiskRadius * 0.7,
+    fillColor: '#22c55e', color: '#15803d', weight: 1.5,
+    fillOpacity: 0.3
+  }).bindPopup('<b>🟢 Low Risk Zone</b><br>Higher NDVI — Intensification potential').addTo(craReportMap);
+
+  // Moderate Risk
+  L.circle([gpLat - 0.005, gpLng - 0.008], {
+    radius: modRiskRadius * 0.55,
+    fillColor: '#f59e0b', color: '#d97706', weight: 1.5,
+    fillOpacity: 0.35
+  }).bindPopup('<b>🟡 Moderate Risk Zone</b><br>Crop Diversification + Mulching').addTo(craReportMap);
+
+  // High Risk
+  L.circle([gpLat + 0.015, gpLng + 0.012], {
+    radius: highRiskRadius * 0.8,
+    fillColor: '#ef4444', color: '#dc2626', weight: 1.5,
+    fillOpacity: 0.4
+  }).bindPopup('<b>🔴 High Risk / Degraded Zone</b><br>Soil & Moisture Conservation Priority').addTo(craReportMap);
+
+  // GP approximate boundary circle
+  L.circle([gpLat, gpLng], {
+    radius: Math.sqrt(agriHa * 3.6 * 10000 / Math.PI),
+    fillColor: 'transparent', color: '#1a5276', weight: 3,
+    dashArray: '8,5', fillOpacity: 0
+  }).bindPopup('<b>GP Boundary (approximate)</b><br>${gp.name_hindi}').addTo(craReportMap);
+
+  // ── Village markers ───────────────────────────────
+  ${villageMarkers}
+
+  // ── Water source markers ──────────────────────────
+  ${waterMarkers}
+
+  // ── GP center label ───────────────────────────────
+  L.marker([${gp.lat}, ${gp.lng}], {
+    icon: L.divIcon({
+      html: '<div style="background:#14532d;color:white;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;white-space:nowrap;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)">${gp.name_hindi}</div>',
+      className: '', iconAnchor: [40, 12]
+    })
+  }).addTo(craReportMap);
+
+  // ── Scale bar + North arrow ───────────────────────
+  L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(craReportMap);
+
+  // Redraw map after load
+  setTimeout(() => craReportMap.invalidateSize(), 400);
+<\/script>
+</body>
+</html>`;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     PUBLIC API
+  ══════════════════════════════════════════════════════════ */
+  function generate(gp, scores, interventions) {
+    if (!gp || !scores) {
+      alert('पहले GP select करें और CRA Analysis चलाएं');
+      return;
+    }
+    const html = buildHTML(gp, scores, interventions || []);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const win  = window.open(url, '_blank');
+    if (!win) {
+      alert('Popup blocked! Browser में popup allow करें और दोबारा try करें।');
+    }
+    // Clean up blob URL after 60s
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+
+  return { generate };
+
+})();
