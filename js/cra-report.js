@@ -158,7 +158,9 @@ window.CRAReport = (() => {
       </tr>`).join('');
 
     const villageMarkers = (gp.villages || []).map((v, i) => `
-      L.circleMarker([${gp.lat + (i*0.008 - 0.02)}, ${gp.lng + (i*0.006 - 0.015)}], {
+      const vLat = parseFloat(${gp.lat}) || 30.39;
+      const vLng = parseFloat(${gp.lng}) || 79.03;
+      L.circleMarker([vLat, vLng], {
         radius: 6, fillColor: '#1e40af', color: '#fff', weight: 2,
         fillOpacity: 0.9
       }).bindPopup('<b>${v}</b><br>Village').addTo(craReportMap);`).join('\n');
@@ -197,7 +199,8 @@ window.CRAReport = (() => {
   .hdr {
     background: linear-gradient(135deg, #14532d 0%, #166534 50%, #0f766e 100%);
     color: white;
-    padding: 10px 18px;
+    padding: 8px 16px;
+    margin-bottom: 0;
     display: grid;
     grid-template-columns: 60px 1fr auto;
     align-items: center;
@@ -232,7 +235,8 @@ window.CRAReport = (() => {
     background: #15803d;
     color: white;
     text-align: center;
-    padding: 5px;
+    padding: 4px 10px;
+    margin-bottom: 0;
     font-size: 13px;
     font-weight: 700;
     letter-spacing: 0.8px;
@@ -245,9 +249,10 @@ window.CRAReport = (() => {
     display: grid;
     grid-template-columns: 1fr 200px;
     gap: 0;
-    height: 260px;
+    margin-top: 0;
+    height: 420px;
   }
-  #craReportMap { width: 100%; height: 260px; }
+  #craReportMap { width: 100%; height: 100%; }
 
   .info-panel {
     background: #f9fafb;
@@ -499,6 +504,12 @@ window.CRAReport = (() => {
     <span>Block ${gp.block_hindi}, District Rudraprayag, Uttarakhand</span>
   </div>
 
+  <!-- Advisory / Metadata Bar -->
+  <div style="background:#fffbeb; color:#92400e; padding:6px 12px; font-size:11px; font-weight:600; border-bottom:1px solid #fde68a; display:flex; justify-content:space-between; align-items:center;">
+    <span>🛰️ <b>Satellite:</b> Sentinel-2 (L2A) | <b>DEM:</b> SRTM 30m | <b>Resolution:</b> 10m Pixel | <b>Assessment Year:</b> 2026</span>
+    <span>⚠️ <b>Alert:</b> उच्च ढलान (>30%) और प्री-मानसून नमी तनाव वाला क्षेत्र — कंटूर बंडिंग और चाल-खाल प्राथमिकता।</span>
+  </div>
+
   <!-- ══ MAP + INFO PANEL ══════════════════════════════ -->
   <div class="map-info-row">
     <div id="craReportMap"></div>
@@ -559,7 +570,7 @@ window.CRAReport = (() => {
     <div class="stat-cell"><span class="stat-icon">🌳</span><span class="stat-val">${gp.land_use?.forest_pct || 40}%</span><span class="stat-label">Forest Cover</span></div>
     <div class="stat-cell"><span class="stat-icon">🛰️</span><span class="stat-val">${gp.avg_ndvi}</span><span class="stat-label">Avg. NDVI</span></div>
     <div class="stat-cell"><span class="stat-icon">🌧️</span><span class="stat-val">${rainfall} mm</span><span class="stat-label">Rainfall (Avg.)</span></div>
-    <div class="stat-cell"><span class="stat-icon">💧</span><span class="stat-val">5 / 2</span><span class="stat-label">Springs (Total/Active)</span></div>
+    <div class="stat-cell"><span class="stat-icon">💧</span><span class="stat-val">${gp.total_springs || 5} / ${gp.active_springs || 2}</span><span class="stat-label">Springs (Total/Active)</span></div>
     <div class="stat-cell"><span class="stat-icon">🌱</span><span class="stat-val" style="font-size:11px;word-break:break-word;">${pCrops}</span><span class="stat-label">Dominant Crops</span></div>
   </div>
 
@@ -727,10 +738,11 @@ window.CRAReport = (() => {
     [gpLat - 0.012, gpLng - 0.010],
     [gpLat + 0.002, gpLng - 0.012]
   ];
-  L.polygon(pts, {
+  const gpBoundary = L.polygon(pts, {
     color: '#1a5276', weight: 3, opacity: 0.8,
     fillColor: '#1a5276', fillOpacity: 0.05
   }).addTo(craReportMap);
+  craReportMap.fitBounds(gpBoundary.getBounds(), { padding: [10, 10] });
 
   // ── Synthetic Drainage Line ─────────────────────────
   const drainPts = [
