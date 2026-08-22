@@ -515,7 +515,7 @@
             const extScores = window.HimalayanCRA.calculateExtendedScores(_currentGP);
             scoresForPdf = {
               ...extScores,
-              indicators: extScores.baseIndicators,
+              indicators: (extScores.baseIndicators && extScores.baseIndicators.indicators) ? extScores.baseIndicators.indicators : extScores.baseIndicators,
               overall: extScores.weightedOverall
             };
             const himalayanInts = window.HimalayanCRA.getHimalayanInterventions(_currentGP, extScores);
