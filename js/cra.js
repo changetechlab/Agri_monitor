@@ -512,8 +512,13 @@
           let interventionsForPdf = _currentInterventions;
           
           if (window.HimalayanCRA) {
-            scoresForPdf = window.HimalayanCRA.calculateExtendedScores(_currentGP);
-            const himalayanInts = window.HimalayanCRA.getHimalayanInterventions(_currentGP, scoresForPdf);
+            const extScores = window.HimalayanCRA.calculateExtendedScores(_currentGP);
+            scoresForPdf = {
+              ...extScores,
+              indicators: extScores.baseIndicators,
+              overall: extScores.weightedOverall
+            };
+            const himalayanInts = window.HimalayanCRA.getHimalayanInterventions(_currentGP, extScores);
             interventionsForPdf = [..._currentInterventions, ...himalayanInts];
           }
           
