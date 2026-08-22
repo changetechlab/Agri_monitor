@@ -666,6 +666,63 @@
               <span>🔥 वन अग्नि जोखिम</span>
             </label>
           </div>
+          
+          <!-- Himalayan CRA Layers -->
+          <div class="layer-group">
+            <div class="layer-group-label">🏔️ हिमालयी CRA परतें</div>
+            
+            <div class="layer-subgroup-label">⚠️ खतरा (Hazard)</div>
+            <label class="layer-toggle">
+              <input type="checkbox" class="layer-toggle-input" data-layer="landslide_susceptibility">
+              <span>🏔️ भूस्खलन संवेदनशीलता</span>
+            </label>
+            
+            <div class="layer-subgroup-label">💧 जल (Water)</div>
+            <label class="layer-toggle">
+              <input type="checkbox" class="layer-toggle-input" data-layer="springs">
+              <span>💧 जल स्रोत (Springs)</span>
+            </label>
+            <label class="layer-toggle">
+              <input type="checkbox" class="layer-toggle-input" data-layer="spring_recharge">
+              <span>🔄 जल पुनर्भरण क्षेत्र</span>
+            </label>
+
+            <div class="layer-subgroup-label">⚖️ प्रशासन (Governance)</div>
+            <label class="layer-toggle">
+              <input type="checkbox" class="layer-toggle-input" data-layer="van_panchayat">
+              <span>🌳 वन पंचायत क्षेत्र</span>
+            </label>
+
+            <div class="layer-subgroup-label">🌾 कृषि (Agriculture)</div>
+            <label class="layer-toggle">
+              <input type="checkbox" class="layer-toggle-input" data-layer="fallow_terraces">
+              <span>🏗️ परती सीढ़ीदार खेत</span>
+            </label>
+            <label class="layer-toggle">
+              <input type="checkbox" class="layer-toggle-input" data-layer="wildlife_conflict">
+              <span>🐒 वन्यजीव संघर्ष क्षेत्र</span>
+            </label>
+
+            <div class="layer-subgroup-label">🛣️ पहुँच (Access)</div>
+            <label class="layer-toggle">
+              <input type="checkbox" class="layer-toggle-input" data-layer="road_network">
+              <span>🛣️ सड़क नेटवर्क</span>
+            </label>
+            <label class="layer-toggle">
+              <input type="checkbox" class="layer-toggle-input" data-layer="market_access">
+              <span>🏪 बाज़ार / मंडी</span>
+            </label>
+
+            <div class="layer-subgroup-label">🛠️ CRA हस्तक्षेप (Interventions)</div>
+            <label class="layer-toggle">
+              <input type="checkbox" class="layer-toggle-input" data-layer="cra_baranaja">
+              <span>🌾 बारहनाजा (Baranaja)</span>
+            </label>
+            <label class="layer-toggle">
+              <input type="checkbox" class="layer-toggle-input" data-layer="cra_khanti">
+              <span>⛏️ खंती / Contour Trench</span>
+            </label>
+          </div>
 
           <!-- Landmarks Layers (Based on User's Rudraprayag Map) -->
           <div class="layer-group">
@@ -755,7 +812,10 @@
             </div>
           </div>
 
-          <!-- Step 5: Recommended Interventions -->
+          <!-- Step 5: Himalayan Assessment -->
+          <div id="himalayan-assessment-section" style="display:none"></div>
+
+          <!-- Step 6: Recommended Interventions -->
           <div id="cra-interventions-section" style="display:none"></div>
 
           <!-- Step 6: Action Buttons -->
@@ -1165,6 +1225,8 @@
 <script src="js/villages.js" defer></script>
 <script src="data/gp_cra_data.js" defer></script>
 <script src="js/cra.js" defer></script>
+<script src="data/himalayan_cra_data.js" defer></script>
+<script src="js/himalayan-cra.js" defer></script>
 <script src="js/cra-report.js" defer></script>
 <script src="js/app.js" defer></script>
 

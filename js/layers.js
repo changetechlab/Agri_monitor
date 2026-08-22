@@ -176,7 +176,19 @@ window.AgriLayers = (() => {
           <button class="popup-btn" style="width:100%;margin-top:8px;font-size:10px;padding:4px;" onclick="AgriMap.flyTo(${p.lat}, ${p.lng}, 15)">🔍 ज़ूम करें</button>
         </div>
       `
-    }
+    },
+
+    // ── HIMALAYAN CRA LAYERS ─────────────────────────
+    landslide_susceptibility: { label: 'Landslide Susceptibility', emoji: '🏔️', managed_by: 'himalayan' },
+    springs: { label: 'Springs', emoji: '💧', managed_by: 'himalayan' },
+    spring_recharge: { label: 'Spring Recharge Zones', emoji: '🔄', managed_by: 'himalayan' },
+    van_panchayat: { label: 'Van Panchayat', emoji: '🌳', managed_by: 'himalayan' },
+    fallow_terraces: { label: 'Fallow Terraces', emoji: '🏗️', managed_by: 'himalayan' },
+    wildlife_conflict: { label: 'Wildlife Conflict', emoji: '🐒', managed_by: 'himalayan' },
+    road_network: { label: 'Road Network', emoji: '🛣️', managed_by: 'himalayan' },
+    market_access: { label: 'Market Access', emoji: '🏪', managed_by: 'himalayan' },
+    cra_baranaja: { label: 'Baranaja', emoji: '🌾', managed_by: 'himalayan' },
+    cra_khanti: { label: 'Khanti / Contour Trench', emoji: '⛏️', managed_by: 'himalayan' }
   };
 
   // ============================================================
@@ -255,6 +267,17 @@ window.AgriLayers = (() => {
     // For Villages — delegate to villages module
     if (id === 'villages') {
       if (window.AgriVillages) window.AgriVillages.toggleLayer(visible);
+      layerStates[id] = visible;
+      renderLegend();
+      return;
+    }
+
+    // For Himalayan CRA layers — delegate to himalayan module if managed there
+    const def = LAYER_DEFINITIONS[id];
+    if (def && def.managed_by === 'himalayan') {
+      if (window.HimalayanCRA && typeof window.HimalayanCRA.toggleLayer === 'function') {
+        window.HimalayanCRA.toggleLayer(id, visible);
+      }
       layerStates[id] = visible;
       renderLegend();
       return;

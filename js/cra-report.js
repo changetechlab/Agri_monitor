@@ -675,6 +675,9 @@ window.CRAReport = (() => {
   <div class="int-bar">🎯 Proposed CRA Interventions (Spatially Suggested — ${interventions.length} total)</div>
   <div class="int-grid">${interventionCards}</div>
 
+  <!-- ══ HIMALAYAN SPECIFIC ═══════════════════════════ -->
+  ${window.HimalayanCRA ? window.HimalayanCRA.renderHimalayanReportSection(gp, scores, interventions) : ''}
+
   <!-- ══ SIGNATURES ═══════════════════════════════════ -->
   <div class="sig-row">
     <div class="sig-box">

@@ -156,6 +156,7 @@ window.AgriApp = (() => {
     // CRA Plan module
     if (window.CRA) {
       try { window.CRA.initCRATab(); } catch(e) { console.warn('[App] CRA init failed:', e); }
+      try { if (window.HimalayanCRA) window.HimalayanCRA.init(); } catch(e) { console.warn('[App] HimalayanCRA init failed:', e); }
     }
     renderDashboardStats();
   }

@@ -447,10 +447,39 @@
     _currentScores = calculateCRAScore(gp);
     const scoresSec = document.getElementById('cra-scores-section');
     if (scoresSec) { scoresSec.innerHTML = renderCRAScores(_currentScores); scoresSec.style.display = 'block'; }
-
+    
     _currentInterventions = getRecommendedInterventions(gp, _currentScores);
-    const intSec = document.getElementById('cra-interventions-section');
-    if (intSec) { intSec.innerHTML = renderInterventions(_currentInterventions); intSec.style.display = 'block'; }
+
+    // --- Himalayan Extension ---
+    let finalScores = _currentScores;
+    let finalInterventions = _currentInterventions;
+    
+    if (window.HimalayanCRA) {
+      const extendedScores = window.HimalayanCRA.calculateExtendedScores(gp);
+      finalScores = extendedScores; // store for PDF generator
+      
+      const himalayanAssessmentHTML = window.HimalayanCRA.renderHimalayanAssessment(gp, extendedScores);
+      const himalayanSec = document.getElementById('himalayan-assessment-section');
+      if (himalayanSec) {
+        himalayanSec.innerHTML = himalayanAssessmentHTML;
+        himalayanSec.style.display = 'block';
+      }
+
+      const himalayanInterventions = window.HimalayanCRA.getHimalayanInterventions(gp, extendedScores);
+      finalInterventions = [..._currentInterventions, ...himalayanInterventions];
+      
+      const intSec = document.getElementById('cra-interventions-section');
+      if (intSec) {
+        const baseHTML = renderInterventions(_currentInterventions);
+        const himalayanHTML = window.HimalayanCRA.renderHimalayanInterventions(himalayanInterventions);
+        intSec.innerHTML = baseHTML + himalayanHTML;
+        intSec.style.display = 'block';
+      }
+    } else {
+      const intSec = document.getElementById('cra-interventions-section');
+      if (intSec) { intSec.innerHTML = renderInterventions(_currentInterventions); intSec.style.display = 'block'; }
+    }
+    // ---------------------------
 
     const mapSec = document.getElementById('cra-map-section');
     if (mapSec) mapSec.style.display = 'block';
@@ -479,7 +508,16 @@
 
         // Prefer 2-Page visual CRAReport generator if available
         if (window.CRAReport && typeof window.CRAReport.generate === 'function') {
-          window.CRAReport.generate(_currentGP, _currentScores, _currentInterventions);
+          let scoresForPdf = _currentScores;
+          let interventionsForPdf = _currentInterventions;
+          
+          if (window.HimalayanCRA) {
+            scoresForPdf = window.HimalayanCRA.calculateExtendedScores(_currentGP);
+            const himalayanInts = window.HimalayanCRA.getHimalayanInterventions(_currentGP, scoresForPdf);
+            interventionsForPdf = [..._currentInterventions, ...himalayanInts];
+          }
+          
+          window.CRAReport.generate(_currentGP, scoresForPdf, interventionsForPdf);
         } else {
           alert('Generating default print view...');
           window.print();

@@ -43,7 +43,14 @@ window.GP_CRA_DATA = {
       frost_risk: 'moderate',
       existing_interventions: ['Kitchen gardens', 'SRI rice (partial)'],
       lat: 30.4855,
-      lng: 79.2437
+      lng: 79.2437,
+      // ── Himalayan CRA Fields (DEMO) ──
+      total_springs: 5, active_springs: 3,
+      landslide_risk: 'high', fire_risk_class: 'moderate', chir_pine_belt: true,
+      fallow_pct: 18, wildlife_conflict_index: 'moderate',
+      road_distance_km: 2.0, market_distance_km: 8, road_access_class: 'high',
+      van_panchayat_overlap: true, van_panchayat_area_ha: 52,
+      baranaja_suitability: 'high'
     },
     {
       id: 'gp_chopta_01',
@@ -77,7 +84,14 @@ window.GP_CRA_DATA = {
       frost_risk: 'high',
       existing_interventions: ['कुछ नहीं'],
       lat: 30.5070,
-      lng: 79.2100
+      lng: 79.2100,
+      // ── Himalayan CRA Fields (DEMO) ──
+      total_springs: 3, active_springs: 1,
+      landslide_risk: 'very_high', fire_risk_class: 'low', chir_pine_belt: false,
+      fallow_pct: 35, wildlife_conflict_index: 'low',
+      road_distance_km: 8.5, market_distance_km: 22, road_access_class: 'very_low',
+      van_panchayat_overlap: true, van_panchayat_area_ha: 85,
+      baranaja_suitability: 'moderate'
     },
     {
       id: 'gp_guptkashi_01',
@@ -111,7 +125,14 @@ window.GP_CRA_DATA = {
       frost_risk: 'low',
       existing_interventions: ['पॉलीहाउस (8 units)', 'ड्रिप सिंचाई (partial)'],
       lat: 30.5226,
-      lng: 79.2054
+      lng: 79.2054,
+      // ── Himalayan CRA Fields (DEMO) ──
+      total_springs: 7, active_springs: 5,
+      landslide_risk: 'moderate', fire_risk_class: 'low', chir_pine_belt: false,
+      fallow_pct: 8, wildlife_conflict_index: 'moderate',
+      road_distance_km: 1.0, market_distance_km: 5, road_access_class: 'very_high',
+      van_panchayat_overlap: false, van_panchayat_area_ha: 0,
+      baranaja_suitability: 'moderate'
     },
     {
       id: 'gp_kalimath_01',
@@ -145,7 +166,14 @@ window.GP_CRA_DATA = {
       frost_risk: 'moderate',
       existing_interventions: ['Kitchen gardens'],
       lat: 30.4650,
-      lng: 79.2650
+      lng: 79.2650,
+      // ── Himalayan CRA Fields (DEMO) ──
+      total_springs: 4, active_springs: 2,
+      landslide_risk: 'high', fire_risk_class: 'moderate', chir_pine_belt: true,
+      fallow_pct: 22, wildlife_conflict_index: 'high',
+      road_distance_km: 4.5, market_distance_km: 15, road_access_class: 'moderate',
+      van_panchayat_overlap: true, van_panchayat_area_ha: 38,
+      baranaja_suitability: 'high'
     },
 
     /* ══════════════════════════════════════════════════════════
@@ -183,7 +211,14 @@ window.GP_CRA_DATA = {
       frost_risk: 'low',
       existing_interventions: ['कुछ नहीं'],
       lat: 30.3267,
-      lng: 79.0978
+      lng: 79.0978,
+      // ── Himalayan CRA Fields (DEMO) ──
+      total_springs: 3, active_springs: 1,
+      landslide_risk: 'high', fire_risk_class: 'high', chir_pine_belt: true,
+      fallow_pct: 28, wildlife_conflict_index: 'high',
+      road_distance_km: 5.0, market_distance_km: 18, road_access_class: 'low',
+      van_panchayat_overlap: true, van_panchayat_area_ha: 42,
+      baranaja_suitability: 'high'
     },
     {
       id: 'gp_tilwara_01',
@@ -217,7 +252,14 @@ window.GP_CRA_DATA = {
       frost_risk: 'moderate',
       existing_interventions: ['कुछ नहीं'],
       lat: 30.3500,
-      lng: 79.0700
+      lng: 79.0700,
+      // ── Himalayan CRA Fields (DEMO) ──
+      total_springs: 2, active_springs: 0,
+      landslide_risk: 'very_high', fire_risk_class: 'high', chir_pine_belt: true,
+      fallow_pct: 40, wildlife_conflict_index: 'moderate',
+      road_distance_km: 7.0, market_distance_km: 20, road_access_class: 'very_low',
+      van_panchayat_overlap: true, van_panchayat_area_ha: 65,
+      baranaja_suitability: 'high'
     },
     {
       id: 'gp_srikot_01',
@@ -251,7 +293,14 @@ window.GP_CRA_DATA = {
       frost_risk: 'low',
       existing_interventions: ['कुछ नहीं'],
       lat: 30.3100,
-      lng: 79.1100
+      lng: 79.1100,
+      // ── Himalayan CRA Fields (DEMO) ──
+      total_springs: 4, active_springs: 2,
+      landslide_risk: 'moderate', fire_risk_class: 'moderate', chir_pine_belt: true,
+      fallow_pct: 25, wildlife_conflict_index: 'high',
+      road_distance_km: 6.0, market_distance_km: 16, road_access_class: 'low',
+      van_panchayat_overlap: true, van_panchayat_area_ha: 35,
+      baranaja_suitability: 'high'
     },
 
     /* ══════════════════════════════════════════════════════════
@@ -289,7 +338,14 @@ window.GP_CRA_DATA = {
       frost_risk: 'low',
       existing_interventions: ['पॉलीहाउस (15 units)', 'ड्रिप सिंचाई', 'FPO active'],
       lat: 30.3820,
-      lng: 79.0567
+      lng: 79.0567,
+      // ── Himalayan CRA Fields (DEMO) ──
+      total_springs: 8, active_springs: 6,
+      landslide_risk: 'low', fire_risk_class: 'low', chir_pine_belt: false,
+      fallow_pct: 5, wildlife_conflict_index: 'low',
+      road_distance_km: 0.5, market_distance_km: 3, road_access_class: 'very_high',
+      van_panchayat_overlap: false, van_panchayat_area_ha: 0,
+      baranaja_suitability: 'low'
     },
     {
       id: 'gp_rudraprayag_01',
@@ -323,7 +379,14 @@ window.GP_CRA_DATA = {
       frost_risk: 'low',
       existing_interventions: ['Kitchen gardens', 'कुछ organic farms'],
       lat: 30.2840,
-      lng: 78.9823
+      lng: 78.9823,
+      // ── Himalayan CRA Fields (DEMO) ──
+      total_springs: 6, active_springs: 4,
+      landslide_risk: 'moderate', fire_risk_class: 'moderate', chir_pine_belt: true,
+      fallow_pct: 12, wildlife_conflict_index: 'moderate',
+      road_distance_km: 1.5, market_distance_km: 6, road_access_class: 'high',
+      van_panchayat_overlap: true, van_panchayat_area_ha: 28,
+      baranaja_suitability: 'moderate'
     },
     {
       id: 'gp_mahar_01',
@@ -357,7 +420,14 @@ window.GP_CRA_DATA = {
       frost_risk: 'moderate',
       existing_interventions: ['Kitchen gardens'],
       lat: 30.3200,
-      lng: 78.9600
+      lng: 78.9600,
+      // ── Himalayan CRA Fields (DEMO) ──
+      total_springs: 5, active_springs: 3,
+      landslide_risk: 'high', fire_risk_class: 'moderate', chir_pine_belt: true,
+      fallow_pct: 20, wildlife_conflict_index: 'moderate',
+      road_distance_km: 3.5, market_distance_km: 12, road_access_class: 'moderate',
+      van_panchayat_overlap: true, van_panchayat_area_ha: 40,
+      baranaja_suitability: 'high'
     },
 
     /* ══════════════════════════════════════════════════════════
@@ -395,7 +465,14 @@ window.GP_CRA_DATA = {
       frost_risk: 'high',
       existing_interventions: ['कुछ नहीं'],
       lat: 30.4100,
-      lng: 79.0100
+      lng: 79.0100,
+      // ── Himalayan CRA Fields (DEMO) ──
+      total_springs: 4, active_springs: 1,
+      landslide_risk: 'high', fire_risk_class: 'high', chir_pine_belt: true,
+      fallow_pct: 32, wildlife_conflict_index: 'high',
+      road_distance_km: 5.5, market_distance_km: 18, road_access_class: 'low',
+      van_panchayat_overlap: true, van_panchayat_area_ha: 55,
+      baranaja_suitability: 'high'
     },
     {
       id: 'gp_chandrapuri_basukedar_01',
@@ -429,7 +506,14 @@ window.GP_CRA_DATA = {
       frost_risk: 'high',
       existing_interventions: ['कुछ नहीं'],
       lat: 30.4260,
-      lng: 79.0340
+      lng: 79.0340,
+      // ── Himalayan CRA Fields (DEMO) ──
+      total_springs: 2, active_springs: 0,
+      landslide_risk: 'very_high', fire_risk_class: 'high', chir_pine_belt: true,
+      fallow_pct: 38, wildlife_conflict_index: 'moderate',
+      road_distance_km: 8.5, market_distance_km: 22, road_access_class: 'very_low',
+      van_panchayat_overlap: true, van_panchayat_area_ha: 75,
+      baranaja_suitability: 'high'
     },
     {
       id: 'gp_kyarkbarsuri_01',
@@ -463,7 +547,14 @@ window.GP_CRA_DATA = {
       frost_risk: 'high',
       existing_interventions: ['कुछ नहीं'],
       lat: 30.3980,
-      lng: 79.0600
+      lng: 79.0600,
+      // ── Himalayan CRA Fields (DEMO) ──
+      total_springs: 1, active_springs: 0,
+      landslide_risk: 'very_high', fire_risk_class: 'moderate', chir_pine_belt: false,
+      fallow_pct: 45, wildlife_conflict_index: 'low',
+      road_distance_km: 12.0, market_distance_km: 25, road_access_class: 'very_low',
+      van_panchayat_overlap: true, van_panchayat_area_ha: 110,
+      baranaja_suitability: 'moderate'
     },
     {
       id: 'gp_marora_01',
@@ -497,7 +588,14 @@ window.GP_CRA_DATA = {
       frost_risk: 'moderate',
       existing_interventions: ['कुछ नहीं'],
       lat: 30.3700,
-      lng: 79.0850
+      lng: 79.0850,
+      // ── Himalayan CRA Fields (DEMO) ──
+      total_springs: 4, active_springs: 1,
+      landslide_risk: 'high', fire_risk_class: 'moderate', chir_pine_belt: true,
+      fallow_pct: 35, wildlife_conflict_index: 'high',
+      road_distance_km: 6.0, market_distance_km: 17, road_access_class: 'low',
+      van_panchayat_overlap: true, van_panchayat_area_ha: 60,
+      baranaja_suitability: 'high'
     }
 
   ], // end gp_list

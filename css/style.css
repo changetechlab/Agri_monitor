@@ -574,6 +574,15 @@ img { max-width: 100%; }
   padding-bottom: 4px;
   border-bottom: 1px solid var(--border);
 }
+.layer-subgroup-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  padding-left: 2px;
+}
 
 .layer-toggle {
   display: flex;
