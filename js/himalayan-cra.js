@@ -98,12 +98,11 @@
         // Combine base indicators and himalayan for weight calculation
         const allIndicators = {};
         if (Array.isArray(baseScores)) {
-            baseScores.forEach(i => allIndicators[i.id] = i.score);
-        } else {
-            // fallback if baseScores is object
-            Object.values(baseScores).forEach(i => { if (i && i.id) allIndicators[i.id] = i.score; });
+            baseScores.forEach(i => allIndicators[i.id || i.key] = i.score);
+        } else if (baseScores && Array.isArray(baseScores.indicators)) {
+            baseScores.indicators.forEach(i => allIndicators[i.id || i.key] = i.score);
         }
-        himalayanIndicators.forEach(i => allIndicators[i.id] = i.score);
+        himalayanIndicators.forEach(i => allIndicators[i.id || i.key] = i.score);
 
         for (const [catName, catConfig] of Object.entries(WEIGHT_CONFIG)) {
             let catSum = 0;
@@ -183,10 +182,16 @@
     function getHimalayanInterventions(gp, extendedScores) {
         const interventions = [];
         const indicators = extendedScores.himalayanIndicators || [];
-        const baseScores = extendedScores.baseIndicators || [];
+        
+        let baseIndicatorsArray = [];
+        if (Array.isArray(extendedScores.baseIndicators)) {
+            baseIndicatorsArray = extendedScores.baseIndicators;
+        } else if (extendedScores.baseIndicators && Array.isArray(extendedScores.baseIndicators.indicators)) {
+            baseIndicatorsArray = extendedScores.baseIndicators.indicators;
+        }
         
         const getScore = (id) => {
-            const ind = indicators.find(i => i.id === id) || baseScores.find(i => i.id === id);
+            const ind = indicators.find(i => i.id === id || i.key === id) || baseIndicatorsArray.find(i => i.id === id || i.key === id);
             return ind ? ind.score : 1;
         };
 
