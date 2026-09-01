@@ -398,3 +398,145 @@ window.AgriLayers = (() => {
     LAYER_DEFINITIONS
   };
 })();
+
+/* ═══════════════════════════════════════════════════════════════
+   GP BOUNDARY LAYER — All 13 Uttarakhand Districts
+   Lazy-loads per-district simplified GeoJSON on demand.
+   Exposes: window.GPBoundaryLayer
+═══════════════════════════════════════════════════════════════ */
+window.GPBoundaryLayer = (() => {
+
+  // District name → GeoJSON filename mapping (matches data/gp_boundaries/)
+  const DISTRICT_FILE_MAP = {
+    'Almora':            'almora',
+    'Bageshwar':         'bageshwar',
+    'Chamoli':           'chamoli',
+    'Champawat':         'champawat',
+    'Dehradun':          'dehradun',
+    'Haridwar':          'haridwar',
+    'Nainital':          'nainital',
+    'Pauri Garhwal':     'pauri_garhwal',
+    'Pithoragarh':       'pithoragarh',
+    'Rudra Prayag':      'rudra_prayag',
+    'Tehri Garhwal':     'tehri_garhwal',
+    'Udam Singh Nagar':  'udam_singh_nagar',
+    'Uttar Kashi':       'uttar_kashi'
+  };
+
+  const _cache = {};           // slug → GeoJSON FeatureCollection
+  let _districtLayer  = null;  // current district Leaflet GeoJSON layer
+  let _highlightLayer = null;  // currently highlighted GP layer
+  let _currentDistrict = null;
+
+  function _getMap() { return window.AgriMap && window.AgriMap.getMap(); }
+
+  const STYLE_DEFAULT = {
+    color: '#6366f1', weight: 1, opacity: 0.5,
+    fillColor: '#818cf8', fillOpacity: 0.08
+  };
+  const STYLE_HIGHLIGHT = {
+    color: '#f59e0b', weight: 2.5, opacity: 1,
+    fillColor: '#fbbf24', fillOpacity: 0.25
+  };
+
+  // ── Load a district GeoJSON (fetches + caches) ───────────────
+  async function loadDistrict(districtName) {
+    const m = _getMap();
+    if (!m) return;
+
+    const slug = DISTRICT_FILE_MAP[districtName];
+    if (!slug) { console.warn('[GPBoundary] Unknown district:', districtName); return; }
+
+    if (_districtLayer) { m.removeLayer(_districtLayer); _districtLayer = null; }
+    if (_highlightLayer) { m.removeLayer(_highlightLayer); _highlightLayer = null; }
+    _currentDistrict = districtName;
+
+    if (!_cache[slug]) {
+      try {
+        const resp = await fetch(`data/gp_boundaries/${slug}_gp.geojson`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        _cache[slug] = await resp.json();
+        console.log(`[GPBoundary] Loaded ${districtName}: ${_cache[slug].features.length} GPs`);
+      } catch (e) {
+        console.error('[GPBoundary] Failed to load:', districtName, e);
+        return;
+      }
+    }
+
+    _districtLayer = L.geoJSON(_cache[slug], {
+      style: STYLE_DEFAULT,
+      onEachFeature: (feature, layer) => {
+        const p = feature.properties;
+        const areaHa = p.SHAPE_Area
+          ? Math.round(p.SHAPE_Area / 10000).toLocaleString('en-IN') : '—';
+        layer.bindPopup(
+          `<b style="font-size:13px">📍 ${p.gp_name || '—'}</b><br>` +
+          `<span style="color:#6b7280">ब्लॉक: ${p.blkname || '—'}</span><br>` +
+          `<span style="color:#6b7280">जिला: ${p.dtname || districtName}</span><br>` +
+          `<span style="color:#6b7280">क्षेत्र: ~${areaHa} हे.</span>`,
+          { maxWidth: 220 }
+        );
+        layer.on('mouseover', () => layer.setStyle({ fillOpacity: 0.2, weight: 1.8 }));
+        layer.on('mouseout', () => { if (_districtLayer) _districtLayer.resetStyle(layer); });
+      }
+    }).addTo(m);
+  }
+
+  // ── Highlight a specific GP by gp_code ──────────────────────
+  function highlightGP(gpCode, fallbackLatLng, color) {
+    const m = _getMap();
+    if (!m) return false;
+
+    if (_highlightLayer) { m.removeLayer(_highlightLayer); _highlightLayer = null; }
+
+    let feature = null;
+    if (_currentDistrict && _cache[DISTRICT_FILE_MAP[_currentDistrict]]) {
+      const data = _cache[DISTRICT_FILE_MAP[_currentDistrict]];
+      feature = data.features.find(f =>
+        String(f.properties.gp_code) === String(gpCode) ||
+        String(f.properties.gpcode)  === String(gpCode)
+      );
+    }
+
+    if (feature) {
+      const hlStyle = Object.assign({}, STYLE_HIGHLIGHT,
+        color ? { color: color, fillColor: color } : {}
+      );
+      _highlightLayer = L.geoJSON(feature, { style: hlStyle }).addTo(m);
+      m.fitBounds(_highlightLayer.getBounds(), { padding: [30, 30], maxZoom: 14 });
+      return true;
+    }
+
+    // Fallback: circle at lat/lng if polygon not found yet
+    if (fallbackLatLng) {
+      _highlightLayer = L.circle(fallbackLatLng, {
+        radius: 2500,
+        color: color || '#f59e0b', fillColor: color || '#fbbf24',
+        fillOpacity: 0.2, weight: 2
+      }).addTo(m);
+    }
+    return false;
+  }
+
+  function clear() {
+    const m = _getMap();
+    if (!m) return;
+    if (_districtLayer)  { m.removeLayer(_districtLayer);  _districtLayer  = null; }
+    if (_highlightLayer) { m.removeLayer(_highlightLayer); _highlightLayer = null; }
+    _currentDistrict = null;
+  }
+
+  function clearHighlight() {
+    const m = _getMap();
+    if (m && _highlightLayer) { m.removeLayer(_highlightLayer); _highlightLayer = null; }
+  }
+
+  return {
+    loadDistrict,
+    highlightGP,
+    clear,
+    clearHighlight,
+    DISTRICT_FILE_MAP,
+    getDistrictNames: () => Object.keys(DISTRICT_FILE_MAP)
+  };
+})();

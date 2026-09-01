@@ -371,6 +371,17 @@
 
     const color = (scores && scores.overall && scores.overall.color) || '#ef4444';
 
+    // ── Try to show real GP polygon from GPBoundaryLayer ──────
+    let polygonShown = false;
+    if (window.GPBoundaryLayer && gp.gp_code) {
+      polygonShown = window.GPBoundaryLayer.highlightGP(
+        gp.gp_code,
+        null,   // no fallback circle — we handle below
+        color
+      );
+    }
+
+    // ── Marker (always shown on top of polygon or as point) ───
     const icon = L.divIcon({
       className: '',
       html: `<div style="background:${color};width:22px;height:22px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.5);"></div>`,
@@ -383,13 +394,16 @@
       .bindPopup(`<b>${gp.name_hindi || gp.name}</b><br>प्राथमिकता: ${scores.overall.label}`)
       .openPopup();
 
-    L.circle([lat, lng], {
-      radius: 2500,
-      color: color,
-      fillColor: color,
-      fillOpacity: 0.15,
-      weight: 2
-    }).addTo(_craMap);
+    // ── Fallback circle only if polygon not found ─────────────
+    if (!polygonShown) {
+      L.circle([lat, lng], {
+        radius: 2500,
+        color: color,
+        fillColor: color,
+        fillOpacity: 0.15,
+        weight: 2
+      }).addTo(_craMap);
+    }
 
     // Map container layout fix
     setTimeout(() => {
@@ -398,32 +412,92 @@
   }
 
 
+
   /* ═══════════════════════════════════════════════════════════
      5.  TAB CONTROLLER & PDF DISPATCHER
   ═══════════════════════════════════════════════════════════ */
 
   function populateGPDropdowns() {
+    const distSel  = document.getElementById('cra-district-select');
     const blockSel = document.getElementById('cra-block-select');
     const gpSel    = document.getElementById('cra-gp-select');
+    const vilSel   = document.getElementById('cra-village-select');
     if (!blockSel || !gpSel || !window.GP_CRA_DATA) return;
 
-    const blocks = window.GP_CRA_DATA.getBlocks();
-    blockSel.innerHTML = '<option value="">-- ब्लॉक चुनें --</option>' +
-      blocks.map(b => `<option value="${b}">${window.GP_CRA_DATA.getBlockHindi(b)} (${b})</option>`).join('');
+    if (distSel && window.GP_CRA_DATA.getDistricts) {
+      const dists = window.GP_CRA_DATA.getDistricts();
+      distSel.innerHTML = '<option value="">-- जिला चुनें --</option>' +
+        dists.map(d => `<option value="${d}">${d}</option>`).join('');
+        
+      distSel.addEventListener('change', () => {
+        const blocks = window.GP_CRA_DATA.getBlocksByDistrict(distSel.value);
+        blockSel.innerHTML = '<option value="">-- ब्लॉक चुनें --</option>' +
+          blocks.map(b => `<option value="${b}">${b}</option>`).join('');
+        blockSel.disabled = (blocks.length === 0);
+        gpSel.innerHTML = '<option value="">-- GP चुनें --</option>';
+        gpSel.disabled = true;
+        if (vilSel) {
+          vilSel.innerHTML = '<option value="">-- पहले GP चुनें --</option>';
+          vilSel.disabled = true;
+        }
+        resetCRAContent();
+        // Load real GP boundary polygons for selected district
+        if (distSel.value && window.GPBoundaryLayer) {
+          window.GPBoundaryLayer.loadDistrict(distSel.value);
+        }
+      });
+    } else {
+      const blocks = window.GP_CRA_DATA.getBlocks();
+      blockSel.innerHTML = '<option value="">-- ब्लॉक चुनें --</option>' +
+        blocks.map(b => `<option value="${b}">${window.GP_CRA_DATA.getBlockHindi ? window.GP_CRA_DATA.getBlockHindi(b) : b} (${b})</option>`).join('');
+    }
 
     blockSel.addEventListener('change', () => {
       const gps = window.GP_CRA_DATA.getByBlock(blockSel.value);
       gpSel.innerHTML = '<option value="">-- GP चुनें --</option>' +
         gps.map(gp => `<option value="${gp.id}">${gp.name_hindi || gp.name}</option>`).join('');
       gpSel.disabled = (gps.length === 0);
+      if (vilSel) {
+        vilSel.innerHTML = '<option value="">-- पहले GP चुनें --</option>';
+        vilSel.disabled = true;
+      }
       resetCRAContent();
     });
 
     gpSel.addEventListener('change', () => {
-      if (!gpSel.value) return;
-      const gp = window.GP_CRA_DATA.getById(gpSel.value);
-      if (gp) runCRAAnalysis(gp);
+      if (!gpSel.value) {
+        if (vilSel) {
+          vilSel.innerHTML = '<option value="">-- पहले GP चुनें --</option>';
+          vilSel.disabled = true;
+        }
+        return;
+      }
+      const gp = window.GP_CRA_DATA.gp_list.find(g => g.id === gpSel.value) || (window.GP_CRA_DATA.getById && window.GP_CRA_DATA.getById(gpSel.value));
+      if (gp) {
+        if (vilSel) {
+          // If GP data doesn't have real villages mapped yet, we create a placeholder list
+          const vils = gp.villages || [
+            `${gp.name_hindi || gp.name} (मुख्य)`,
+            `${gp.name_hindi || gp.name} तल्ला`,
+            `${gp.name_hindi || gp.name} मल्ला`
+          ];
+          vilSel.innerHTML = '<option value="all">सभी गाँव (पूरा GP)</option>' +
+            vils.map((v, i) => `<option value="v${i}">${v}</option>`).join('');
+          vilSel.disabled = false;
+        }
+        runCRAAnalysis(gp);
+      }
     });
+
+    if (vilSel) {
+      vilSel.addEventListener('change', () => {
+        // Run analysis on the specific village if needed, but for now re-render GP
+        if (vilSel.value) {
+          const gp = window.GP_CRA_DATA.gp_list.find(g => g.id === gpSel.value) || (window.GP_CRA_DATA.getById && window.GP_CRA_DATA.getById(gpSel.value));
+          if (gp) runCRAAnalysis(gp);
+        }
+      });
+    }
   }
 
   function resetCRAContent() {

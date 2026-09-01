@@ -24,13 +24,28 @@ window.AgriApp = (() => {
     isDemo:       true,
   };
 
-  // ── District map centers ──────────────────────────────────
+  // ── District map centers (all 13 Uttarakhand districts) ──────
   const DISTRICT_CENTERS = {
-    rudraprayag: [30.3985, 79.0561],
-    chamoli:     [30.4007, 79.3216],
-    tehri:       [30.3786, 78.4797],
-    uttarkashi:  [30.7268, 78.4354],
-    pauri:       [29.8827, 79.0034],
+    // Key = district name as it appears in GP data (title case)
+    'Rudra Prayag':     [30.3985, 79.0561],
+    'Chamoli':          [30.4007, 79.3216],
+    'Tehri Garhwal':    [30.3786, 78.4797],
+    'Uttar Kashi':      [30.7268, 78.4354],
+    'Pauri Garhwal':    [29.8827, 79.0034],
+    'Almora':           [29.5971, 79.6591],
+    'Bageshwar':        [29.8388, 79.7713],
+    'Champawat':        [29.3327, 80.0900],
+    'Dehradun':         [30.3165, 78.0322],
+    'Haridwar':         [29.9457, 78.1642],
+    'Nainital':         [29.3919, 79.4542],
+    'Pithoragarh':      [29.5830, 80.2183],
+    'Udam Singh Nagar': [28.9944, 79.5163],
+    // Legacy keys for backward compat
+    rudraprayag:        [30.3985, 79.0561],
+    chamoli:            [30.4007, 79.3216],
+    tehri:              [30.3786, 78.4797],
+    uttarkashi:         [30.7268, 78.4354],
+    pauri:              [29.8827, 79.0034],
   };
 
   // ═══════════════════════════════════════════════════════════
@@ -288,18 +303,54 @@ window.AgriApp = (() => {
     });
   }
 
-  // ── District selector ─────────────────────────────────────
+  // ── District selector (all 13 districts, dynamic) ─────────
   function bindDistrictSelector() {
     const sel = document.getElementById('district-select');
     if (!sel) return;
+
+    // Dynamically populate all 13 districts from GPBoundaryLayer
+    if (window.GPBoundaryLayer) {
+      const districts = window.GPBoundaryLayer.getDistrictNames();
+      sel.innerHTML =
+        '<option value="all">सभी जिले</option>' +
+        districts.map(d => {
+          const selected = (d === 'Rudra Prayag') ? ' selected' : '';
+          return `<option value="${d}"${selected}>${d}</option>`;
+        }).join('');
+      
+      // Trigger change to populate block dropdown for the selected district
+      setTimeout(() => { sel.dispatchEvent(new Event('change')); }, 100);
+    }
+
     sel.addEventListener('change', () => {
       state.currentDistrict = sel.value;
-      const center = DISTRICT_CENTERS[sel.value] || DISTRICT_CENTERS.rudraprayag;
-      AgriMap.flyTo(center[0], center[1], 11);
-      
+      const center = DISTRICT_CENTERS[sel.value] || DISTRICT_CENTERS['Rudra Prayag'];
+      if (center) AgriMap.flyTo(center[0], center[1], 11);
+
+      // Load real GP boundary polygons for this district
+      if (sel.value !== 'all' && window.GPBoundaryLayer) {
+        window.GPBoundaryLayer.loadDistrict(sel.value);
+      } else if (sel.value === 'all' && window.GPBoundaryLayer) {
+        window.GPBoundaryLayer.clear();
+      }
+
       // Sync weather alerts and temperature
       if (window.AgriWeather) AgriWeather.updateWeather(sel.value);
-      
+
+      // Update block dropdown for selected district
+      const blockSel = document.getElementById('block-select');
+      const farmerBlockSel = document.getElementById('farmer-block-filter');
+      if (sel.value !== 'all' && window.GP_CRA_DATA && window.GP_CRA_DATA.getBlocksByDistrict) {
+        const blocks = window.GP_CRA_DATA.getBlocksByDistrict(sel.value);
+        const optionsHtml = '<option value="all">सभी ब्लॉक</option>' +
+          blocks.map(b => `<option value="${b}">${b}</option>`).join('');
+        if (blockSel) blockSel.innerHTML = optionsHtml;
+        if (farmerBlockSel) farmerBlockSel.innerHTML = optionsHtml;
+      } else if (sel.value === 'all') {
+        if (blockSel) blockSel.innerHTML = '<option value="all">सभी ब्लॉक</option>';
+        if (farmerBlockSel) farmerBlockSel.innerHTML = '<option value="all">सभी ब्लॉक</option>';
+      }
+
       showToast(`📍 ${sel.options[sel.selectedIndex].text}`, 'success');
     });
   }

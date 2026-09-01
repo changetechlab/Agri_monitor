@@ -1,0 +1,17 @@
+Almora: 1,840 GPs -> by_district/almora_gp.geojson
+Bageshwar: 730 GPs -> by_district/bageshwar_gp.geojson
+Chamoli: 944 GPs -> by_district/chamoli_gp.geojson
+Champawat: 584 GPs -> by_district/champawat_gp.geojson
+Dehradun: 649 GPs -> by_district/dehradun_gp.geojson
+Haridwar: 412 GPs -> by_district/haridwar_gp.geojson
+Nainital: 804 GPs -> by_district/nainital_gp.geojson
+Pauri Garhwal: 2,031 GPs -> by_district/pauri_garhwal_gp.geojson
+Pithoragarh: 1,106 GPs -> by_district/pithoragarh_gp.geojson
+Rudra Prayag: 598 GPs -> by_district/rudra_prayag_gp.geojson
+Tehri Garhwal: 2,033 GPs -> by_district/tehri_garhwal_gp.geojson
+Udam Singh Nagar: 493 GPs -> by_district/udam_singh_nagar_gp.geojson
+Uttar Kashi: 942 GPs -> by_district/uttar_kashi_gp.geojson
+
+Districts found: 13 (expected 13)
+Possibly missing / name-mismatch: ['Rudraprayag', 'Udham Singh Nagar', 'Uttarkashi']
+(check spelling/diacritics in the data vs. UTTARAKHAND_DISTRICTS list)

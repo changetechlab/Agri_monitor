@@ -55,35 +55,11 @@
     <div class="topbar-center">
       <div class="hierarchy-selector">
         <select id="district-select" title="जिला">
-          <option value="all">सभी जिले</option>
-          <option value="rudraprayag" selected>रुद्रप्रयाग</option>
-          <option value="chamoli">चमोली</option>
-          <option value="tehri">टिहरी</option>
-          <option value="uttarkashi">उत्तरकाशी</option>
-          <option value="almora">अल्मोड़ा</option>
-          <option value="pithoragarh">पिथौरागढ़</option>
-          <option value="pauri">पौड़ी</option>
+          <option value="all">सभी जिले (लोड हो रहा है...)</option>
         </select>
         <span class="hierarchy-arrow">›</span>
         <select id="block-select" title="ब्लॉक">
           <option value="all">सभी ब्लॉक</option>
-          <optgroup label="रुद्रप्रयाग (Rudraprayag)">
-            <option value="Ukhimath">ऊखीमठ</option>
-            <option value="Jakholi">जखोली</option>
-            <option value="Agastyamuni">अगस्त्यमुनि</option>
-            <option value="Basukedar">बासुकेदार</option>
-          </optgroup>
-          <optgroup label="टिहरी (Tehri Garhwal)">
-            <option value="Pratapnagar">प्रतापनगर (Pratapnagar)</option>
-            <option value="Kirtinagar">कीर्ति नगर (Kirti Nagar)</option>
-            <option value="Jaunpur">जौनपुर (Jaunpur)</option>
-            <option value="Jhakhanidhar">जाखणीधार (Jhakhanidhar)</option>
-            <option value="Bhilangana">भिलंगना (Bhilangana)</option>
-            <option value="Narendranagar">नरेंद्र नगर (Narendra Nagar)</option>
-            <option value="Thauldhar">थौलधार (Thauldhar)</option>
-            <option value="Devprayag">देवप्रयाग (Devprayag)</option>
-            <option value="Chamba">चंबा (Chamba)</option>
-          </optgroup>
         </select>
       </div>
     </div>
@@ -776,7 +752,7 @@
 
             <div class="form-group" style="margin-bottom:10px">
               <label class="form-label">जिला (District)</label>
-              <select id="cra-district-select" class="form-input" disabled>
+              <select id="cra-district-select" class="form-input">
                 <option value="rudraprayag">रुद्रप्रयाग (Rudraprayag)</option>
               </select>
             </div>
@@ -792,6 +768,13 @@
               <label class="form-label">ग्राम पंचायत (GP)</label>
               <select id="cra-gp-select" class="form-input" disabled>
                 <option value="">-- पहले ब्लॉक चुनें --</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom:12px">
+              <label class="form-label">गाँव (Village Level)</label>
+              <select id="cra-village-select" class="form-input" disabled>
+                <option value="">-- पहले GP चुनें --</option>
               </select>
             </div>
 
@@ -1224,6 +1207,7 @@
 <script src="js/weather.js" defer></script>
 <script src="js/villages.js" defer></script>
 <script src="data/gp_cra_data.js" defer></script>
+<script src="data/all_uttarakhand_gps.js" defer></script>
 <script src="js/cra.js" defer></script>
 <script src="data/himalayan_cra_data.js" defer></script>
 <script src="js/himalayan-cra.js" defer></script>

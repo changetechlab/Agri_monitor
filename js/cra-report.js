@@ -108,7 +108,7 @@ window.CRAReport = (() => {
   /* ══════════════════════════════════════════════════════════
      MAIN REPORT HTML GENERATOR
   ══════════════════════════════════════════════════════════ */
-  function buildHTML(gp, scores, interventions) {
+  function buildHTML(gp, scores, interventions, gpGeoJSON) {
     const rainfall = gp.rainfall || gp.avg_rainfall_mm || (1200 + Math.floor(Math.random() * 200));
     const pCrops = Array.isArray(gp.primary_crops) ? gp.primary_crops.join(', ') : gp.primary_crops || 'मंडुवा, झंगोरा';
     const slope  = buildSlopeData(gp);
@@ -116,6 +116,22 @@ window.CRAReport = (() => {
     const today  = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
     const avgSlopeDeg = gp.slope === 'very_steep' ? '42°' : gp.slope === 'steep' ? '35°' : gp.slope === 'moderate' ? '22°' : '10°';
     const slopeSVG = donutSVG(slope, 90, 90, 75);
+
+    // Pre-compute polygon script (avoids nested template literal issue)
+    const gpBoundaryScript = gpGeoJSON
+      ? `const gpBoundary = L.geoJSON(${JSON.stringify(gpGeoJSON)}, {
+           style: { color: '#1a5276', weight: 3, opacity: 0.9, fillColor: '#1a5276', fillOpacity: 0.08 }
+         }).addTo(craReportMap);
+         craReportMap.fitBounds(gpBoundary.getBounds(), { padding: [10, 10] });`
+      : `const pts = [
+           [gpLat+0.012,gpLng-0.005],[gpLat+0.008,gpLng+0.015],
+           [gpLat-0.002,gpLng+0.018],[gpLat-0.015,gpLng+0.008],
+           [gpLat-0.012,gpLng-0.010],[gpLat+0.002,gpLng-0.012]
+         ];
+         const gpBoundary = L.polygon(pts, {
+           color:'#1a5276',weight:3,opacity:0.8,fillColor:'#1a5276',fillOpacity:0.05
+         }).addTo(craReportMap);
+         craReportMap.fitBounds(gpBoundary.getBounds(),{padding:[10,10]});`;
 
     const ovLevel = scores.overall.level || scores.overall;
     const overallColor = ovLevel === 'High' ? '#ef4444' : ovLevel === 'Medium' ? '#f59e0b' : '#22c55e';
@@ -493,15 +509,15 @@ window.CRAReport = (() => {
     </div>
     <div class="hdr-sub">
       <b>🗓️ ${today}</b>
-      Sub-District: ${gp.block_hindi}<br>
-      District: रुद्रप्रयाग | Code: 54
+      Sub-District: ${gp.block_hindi || gp.block}<br>
+      District: ${gp.district_hindi || gp.district} | GP Code: ${gp.gp_code || '—'}
     </div>
   </div>
 
   <!-- GP Name Band -->
   <div class="gp-band">
-    Sentinel-2 Based Demo Map — ${gp.name_hindi}
-    <span>Block ${gp.block_hindi}, District Rudraprayag, Uttarakhand</span>
+    Satellite-Based Assessment Map — ${gp.name_hindi || gp.name}
+    <span>Block: ${gp.block_hindi || gp.block} | District: ${gp.district_hindi || gp.district}, Uttarakhand</span>
   </div>
 
   <!-- Advisory / Metadata Bar -->
@@ -690,7 +706,7 @@ window.CRAReport = (() => {
     </div>
     <div class="sig-box">
       नोडल अधिकारी / Nodal Officer<br>
-      <span style="font-weight:400;font-size:8px;color:#6b7280">UCRRFP / REAP, Rudraprayag</span>
+      <span style="font-weight:400;font-size:8px;color:#6b7280">UCRRFP / REAP, ${gp.district || 'Uttarakhand'}</span>
     </div>
   </div>
 
@@ -732,20 +748,9 @@ window.CRAReport = (() => {
   const ndvi  = ${gp.avg_ndvi};
   const agriHa = ${gp.agri_area_ha};
 
-  // ── Synthetic GP Polygon Boundary ──────────────────
-  const pts = [
-    [gpLat + 0.012, gpLng - 0.005],
-    [gpLat + 0.008, gpLng + 0.015],
-    [gpLat - 0.002, gpLng + 0.018],
-    [gpLat - 0.015, gpLng + 0.008],
-    [gpLat - 0.012, gpLng - 0.010],
-    [gpLat + 0.002, gpLng - 0.012]
-  ];
-  const gpBoundary = L.polygon(pts, {
-    color: '#1a5276', weight: 3, opacity: 0.8,
-    fillColor: '#1a5276', fillOpacity: 0.05
-  }).addTo(craReportMap);
-  craReportMap.fitBounds(gpBoundary.getBounds(), { padding: [10, 10] });
+
+  // ── GP Boundary (real or synthetic fallback) ────────
+  ${gpBoundaryScript}
 
   // ── Synthetic Drainage Line ─────────────────────────
   const drainPts = [
@@ -784,22 +789,44 @@ window.CRAReport = (() => {
   }
 
   /* ══════════════════════════════════════════════════════════
-     PUBLIC API
+     PUBLIC API — async generate with real GP polygon
   ══════════════════════════════════════════════════════════ */
-  function generate(gp, scores, interventions) {
+  async function generate(gp, scores, interventions) {
     if (!gp || !scores) {
       alert('पहले GP select करें और CRA Analysis चलाएं');
       return;
     }
-    const html = buildHTML(gp, scores, interventions || []);
-    // FIX ENCODING ISSUE: Prepend BOM (﻿) to make sure browser interprets it as UTF-8
-    const blob = new Blob(['﻿' + html], { type: 'text/html;charset=utf-8' });
+
+    // ── Try to fetch real GP polygon from GeoJSON file ─────
+    let gpGeoJSON = null;
+    const DISTRICT_FILE_MAP = {
+      'Almora':'almora','Bageshwar':'bageshwar','Chamoli':'chamoli',
+      'Champawat':'champawat','Dehradun':'dehradun','Haridwar':'haridwar',
+      'Nainital':'nainital','Pauri Garhwal':'pauri_garhwal',
+      'Pithoragarh':'pithoragarh','Rudra Prayag':'rudra_prayag',
+      'Tehri Garhwal':'tehri_garhwal','Udam Singh Nagar':'udam_singh_nagar',
+      'Uttar Kashi':'uttar_kashi'
+    };
+    const slug = DISTRICT_FILE_MAP[gp.district];
+    if (slug && gp.gp_code) {
+      try {
+        const resp = await fetch(`data/gp_boundaries/${slug}_gp.geojson`);
+        if (resp.ok) {
+          const fc = await resp.json();
+          const feat = fc.features.find(f =>
+            String(f.properties.gp_code) === String(gp.gp_code) ||
+            String(f.properties.gpcode)  === String(gp.gp_code)
+          );
+          if (feat) gpGeoJSON = feat;
+        }
+      } catch(e) { console.warn('[CRAReport] GeoJSON fetch failed:', e); }
+    }
+
+    const html = buildHTML(gp, scores, interventions || [], gpGeoJSON);
+    const blob = new Blob(['\uFEFF' + html], { type: 'text/html;charset=utf-8' });
     const url  = URL.createObjectURL(blob);
     const win  = window.open(url, '_blank');
-    if (!win) {
-      alert('Popup blocked! Browser में popup allow करें और दोबारा try करें।');
-    }
-    // Clean up blob URL after 60s
+    if (!win) alert('Popup blocked! Browser में popup allow करें।');
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   }
 

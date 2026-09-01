@@ -1,0 +1,5 @@
+geopandas
+pyarrow
+fiona
+shapely
+pandas

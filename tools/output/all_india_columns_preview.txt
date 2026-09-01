@@ -1,0 +1,50 @@
+COLUMNS:
+OBJECTID, gpcode, gpname, stname, dtname, sdtname, stcode11, dtcode11, sdtcode11, blklgdcode, blkname, dt_lgd, sdt_lgd, st_lgd, vilcode11, vilname11, pan_local, b_pan_code, b_pan_name, d_pan_code, d_pan_name, gp_code, gp_name, st_2011, dt_2011, sdt_2011, subdtname, block_name, blk_lgdcod, dtcode14, SHAPE_Length, SHAPE_Area, geometry, xmin, ymin, xmax, ymax
+
+DTYPES:
+OBJECTID           int32
+gpcode            object
+gpname            object
+stname            object
+dtname            object
+sdtname           object
+stcode11          object
+dtcode11          object
+sdtcode11         object
+blklgdcode        object
+blkname           object
+dt_lgd             int32
+sdt_lgd            int32
+st_lgd             int32
+vilcode11        float64
+vilname11         object
+pan_local         object
+b_pan_code         int32
+b_pan_name        object
+d_pan_code         int32
+d_pan_name        object
+gp_code           object
+gp_name           object
+st_2011           object
+dt_2011           object
+sdt_2011          object
+subdtname         object
+block_name        object
+blk_lgdcod        object
+dtcode14          object
+SHAPE_Length     float64
+SHAPE_Area       float64
+geometry        geometry
+xmin             float64
+ymin             float64
+xmax             float64
+ymax             float64
+dtype: object
+
+FIRST 5 ROWS (non-geometry columns):
+   OBJECTID  gpcode                          gpname       stname                dtname sdtname stcode11 dtcode11 sdtcode11 blklgdcode blkname  dt_lgd  sdt_lgd  st_lgd  vilcode11 vilname11 pan_local  b_pan_code b_pan_name  d_pan_code            d_pan_name gp_code                         gp_name st_2011 dt_2011 sdt_2011 subdtname block_name blk_lgdcod dtcode14  SHAPE_Length    SHAPE_Area       xmin       ymin       xmax       ymax
+0    233328  290185  VILLAGE(DWEEP)PANCHAYAT AGATTI  LAKSHADWEEP  Lakshadweep District  Agatti       31      587     05626       5940  AGATTI     553     5626      31        0.0                               0                    508  LAKSHADWEEP DISTRICT  290185  VILLAGE(DWEEP)PANCHAYAT AGATTI      31     587    05626    Agatti     AGATTI       5940      587   1330.377882  8.586716e+04  72.164028  10.813808  72.168321  10.816357
+1    233329  290185  VILLAGE(DWEEP)PANCHAYAT AGATTI  LAKSHADWEEP  Lakshadweep District  Agatti       31      587     05626       5940  AGATTI     553     5626      31        0.0                               0                    508  LAKSHADWEEP DISTRICT  290185  VILLAGE(DWEEP)PANCHAYAT AGATTI      31     587    05626    Agatti     AGATTI       5940      587  16435.344454  2.972280e+06  72.169309  10.819272  72.205765  10.879961
+2    233330  290185  VILLAGE(DWEEP)PANCHAYAT AGATTI  LAKSHADWEEP  Lakshadweep District  Agatti       31      587     05626       5940  AGATTI     553     5626      31        0.0                               0                    508  LAKSHADWEEP DISTRICT  290185  VILLAGE(DWEEP)PANCHAYAT AGATTI      31     587    05626    Agatti     AGATTI       5940      587   4355.741123  6.625111e+05  72.283959  10.936764  72.292747  10.948249
+3    233334  290185  VILLAGE(DWEEP)PANCHAYAT AGATTI  LAKSHADWEEP  Lakshadweep District  Agatti       31      587     05626       5940  AGATTI     553     5626      31        0.0                               0                    508  LAKSHADWEEP DISTRICT  290185  VILLAGE(DWEEP)PANCHAYAT AGATTI      31     587    05626    Agatti     AGATTI       5940      587    852.711356  3.621100e+04  72.333292  10.957300  72.334778  10.960378
+4    233333  290185  VILLAGE(DWEEP)PANCHAYAT AGATTI  LAKSHADWEEP  Lakshadweep District  Agatti       31      587     05626       5940  AGATTI     553     5626      31        0.0                               0                    508  LAKSHADWEEP DISTRICT  290185  VILLAGE(DWEEP)PANCHAYAT AGATTI      31     587    05626    Agatti     AGATTI       5940      587    813.279343  2.809430e+04  72.332108  10.954150  72.334107  10.956373
