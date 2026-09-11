@@ -340,19 +340,48 @@
 
 
         <!-- ======================================================
-             TAB: SATELLITE / NDVI
+             TAB: SATELLITE / MULTI-INDEX
              ====================================================== -->
         <div id="tab-satellite" class="tab-panel">
           <div class="tab-header">
-            <h2>🛰️ उपग्रह स्वास्थ्य</h2>
+            <h2>🛰️ उपग्रह विश्लेषण</h2>
             <span id="satellite-mode-label" style="font-size:10px;color:var(--teal)">Sentinel-2</span>
           </div>
 
-          <!-- Mode toggle -->
+          <!-- Mode toggle: Sentinel-2 base | Index Analysis -->
           <div class="satellite-mode-btns">
             <button id="btn-sentinel" class="satellite-mode-btn active">🛰️ Sentinel-2</button>
-            <button id="btn-ndvi" class="satellite-mode-btn">🟢 NDVI रंग</button>
+            <button id="btn-index"    class="satellite-mode-btn">📊 Index विश्लेषण</button>
           </div>
+
+          <!-- Multi-Index Selector -->
+          <div class="ndvi-control-group">
+            <div class="control-label">
+              <span>🔬 Satellite Index चुनें</span>
+            </div>
+            <select id="index-selector" class="form-input index-selector-input">
+              <option value="ndvi">🌿 NDVI — Vegetation Health</option>
+              <option value="ndre">🌱 NDRE — Crop Stress / Chlorophyll</option>
+              <option value="ndwi">💧 NDWI — Water / Moisture</option>
+              <option value="ndbi">🏘️ NDBI — Built-up / Settlement</option>
+            </select>
+          </div>
+
+          <!-- Index Description Row -->
+          <div class="index-desc-card">
+            <div class="index-formula-row">
+              <span class="index-formula-label">सूत्र:</span>
+              <code id="index-formula" class="index-formula-code">—</code>
+            </div>
+            <div class="index-formula-row" style="margin-top:3px;">
+              <span class="index-formula-label">Bands:</span>
+              <span id="index-band-detail" style="font-size:9.5px;color:var(--text-muted)">—</span>
+            </div>
+            <p id="index-description" class="index-desc-text">—</p>
+          </div>
+
+          <!-- Data Limitation / Simulation Notice -->
+          <div id="index-capability-notice" class="index-capability-notice notice-sim" style="display:none;"></div>
 
           <!-- Date selector -->
           <div class="ndvi-control-group">
@@ -372,20 +401,17 @@
             <input type="range" id="ndvi-opacity" class="opacity-slider" min="0.1" max="1" step="0.05" value="0.8">
           </div>
 
-          <!-- NDVI Color Scale -->
+          <!-- Index Color Scale + Legend Ranges -->
           <div class="ndvi-legend-panel">
-            <h4>🎨 NDVI रंग स्केल</h4>
+            <h4 id="index-legend-title">🎨 Index रंग स्केल</h4>
             <canvas id="ndvi-color-scale" height="20"></canvas>
             <div class="ndvi-scale-labels">
-              <span class="label-stress">-1 तनाव</span>
-              <span>0 मध्यम</span>
-              <span class="label-healthy">+1 स्वस्थ</span>
+              <span class="label-stress">−1</span>
+              <span>0</span>
+              <span class="label-healthy">+1</span>
             </div>
-            <div style="display:flex;gap:8px;margin-top:6px;font-size:10px;">
-              <span style="color:var(--red)">● &lt;0.25 तनाव</span>
-              <span style="color:var(--yellow)">● 0.25-0.45 मध्यम</span>
-              <span style="color:var(--green)">● &gt;0.45 स्वस्थ</span>
-            </div>
+            <!-- Per-index interpretation ranges -->
+            <div id="index-legend-ranges" class="index-legend-ranges"></div>
           </div>
 
           <!-- Date comparison -->
@@ -402,10 +428,10 @@
             </div>
           </div>
 
-          <!-- NDVI Time-Lapse Player -->
+          <!-- Time-Lapse Player -->
           <div class="time-lapse-panel" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:16px;">
             <h4 style="margin:0 0 8px 0;display:flex;align-items:center;justify-content:space-between;font-size:12px;">
-              <span>⏳ NDVI समय-यात्रा (Time-Lapse)</span>
+              <span>⏳ समय-यात्रा (Time-Lapse)</span>
               <span id="time-lapse-status" style="font-size:9.5px;color:#eab308;font-weight:bold;">⏹️ Stopped</span>
             </h4>
             <p style="font-size:10px;color:var(--text-muted);margin:0 0 10px 0;">पिछले 6 महीनों में फसल विकास/तनाव का लाइव एनीमेशन देखें।</p>
@@ -418,27 +444,26 @@
                 <option value="500">0.5s</option>
               </select>
             </div>
-            <!-- Progress Bar -->
-            <div style="width:100%;height:4px;background:rgba(255,255,255,0.05);margin-top:10px;border-radius:2px;overflow:hidden;position:relative;">
+            <div style="width:100%;height:4px;background:rgba(255,255,255,0.05);margin-top:10px;border-radius:2px;overflow:hidden;">
               <div id="timelapse-progress" style="width:0%;height:100%;background:var(--green);transition:width 0.3s ease;"></div>
             </div>
           </div>
 
-          <!-- Sentinel-2 Band Reference & GEE Info -->
-          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:10px;font-size:11px;color:var(--text-muted)">
-            <strong style="color:var(--teal)">ℹ️ Sentinel-2 MSI — बैंड जानकारी</strong><br><br>
-            <span style="color:var(--text-secondary)">📐 NDVI सूत्र:</span>
-            <span style="color:var(--green);font-family:monospace;font-size:10.5px"> (B8 − B4) / (B8 + B4)</span><br>
-            <span style="font-size:10px">B8 = NIR 842 nm (10 m) &nbsp;|&nbsp; B4 = Red 665 nm (10 m)</span><br><br>
-            <span style="color:var(--text-secondary)">🔴 Red-Edge बैंड</span> <span style="font-size:10px">(फसल तनाव जांच):</span><br>
-            <span style="font-size:10px">B5 = 705 nm &nbsp;|&nbsp; B6 = 740 nm &nbsp;|&nbsp; B7 = 783 nm (20 m)</span><br><br>
-            <span style="color:var(--text-secondary)">💧 SWIR बैंड</span> <span style="font-size:10px">(मिट्टी नमी / जल सामग्री):</span><br>
-            <span style="font-size:10px">B11 = 1610 nm &nbsp;|&nbsp; B12 = 2190 nm (20 m)</span><br><br>
-            <span style="color:var(--text-secondary)">🔗 Real-time NDVI के लिए:</span><br>
-            • Google Earth Engine (GEE) account बनाएं<br>
-            • js/config.js में GEE_TILE_URL सेट करें<br>
-            • या TiTiler instance deploy करें (L2A COGs)
+          <!-- Satellite Data Limitation Notice (persistent) -->
+          <div class="sat-limitation-box">
+            <strong>⚠️ Satellite Data Limitation</strong><br>
+            वर्तमान imagery <strong>EOX Sentinel-2 Cloudless RGB</strong> है।
+            Individual Sentinel-2 spectral bands उपलब्ध नहीं हैं, इसलिए
+            real pixel-level NDRE, NDWI और NDBI computation अभी enabled नहीं है।<br><br>
+            Real satellite-derived index analysis के लिए एक
+            <strong>band-capable source</strong> connect करें —
+            जैसे <strong>Google Earth Engine</strong> या
+            <strong>TiTiler</strong> (Sentinel-2 L2A COGs)।<br><br>
+            <span style="font-size:10px;color:var(--text-muted)">
+              Configure: <code>js/config.js</code> → <code>GEE_TILE_URL</code> या <code>NDVI_TILE_URL</code>
+            </span>
           </div>
+
         </div><!-- /tab-satellite -->
 
 
@@ -1218,6 +1243,7 @@
 <script src="data/himalayan_cra_data.js" defer></script>
 <script src="js/himalayan-cra.js" defer></script>
 <script src="js/cra-report.js" defer></script>
+<script src="js/satellite-engine.js" defer></script>
 <script src="js/app.js" defer></script>
 
 </body>

@@ -1,93 +1,61 @@
-/**
- * Agri Monitor — js/ndvi.js
- * NDVI satellite tile integration with date selection and opacity control
- * Supports: EOX Sentinel-2 (free), TiTiler NDVI, GEE endpoints
+﻿/**
+ * Agri Monitor -- js/ndvi.js
+ * Multi-Index Satellite Visualization
+ * Supports: NDVI, NDRE, NDWI, NDBI (via SatelliteEngine)
+ *
+ * DATA SOURCE: EOX Sentinel-2 Cloudless 2020 (RGB tiles -- no individual bands)
+ * Real per-pixel index computation requires GEE or TiTiler (see satellite-engine.js).
+ * Field polygon coloring uses SIMULATED values (clearly labelled in UI).
+ *
+ * Preserves all existing exports for backward compatibility:
+ *   showSentinel, showNDVI, toggle, setOpacity, setDate,
+ *   renderColorLegend, startDateComparison, stopDateComparison,
+ *   ndviToRgb, startTimelapse, stopTimelapse, getActiveDate, getCurrentMode
+ *
+ * New exports: showIndex, setActiveIndex, getActiveIndex
+ *
+ * Exposes: window.AgriNDVI
  */
 
 window.AgriNDVI = (() => {
-  let tileLayer = null;
-  let sentinelLayer = null;
-  let activeDate = new Date().toISOString().slice(0, 10);
-  let opacity = 0.8;
-  let currentMode = 'sentinel'; // 'sentinel' | 'ndvi' | 'off'
-  let isVisible = false;
+  let tileLayer    = null;
+  let compareLayer = null;
+  let activeDate   = new Date().toISOString().slice(0, 10);
+  let opacity      = 0.8;
+  let currentMode  = 'sentinel';   // 'sentinel' | 'index' | 'off'
+  let activeIndex  = 'ndvi';       // currently selected index type
+  let isVisible    = false;
+
+  // Sentinel tile URL (unchanged from original)
+  const EOX_URL = 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg';
 
   // ============================================================
-  // NDVI Color Scale (Red → Yellow → Green: -1 to +1)
-  // Formula: NDVI = (B8 − B4) / (B8 + B4)
-  //   B8  = NIR  842 nm  10 m  (Sentinel-2 MSI)
-  //   B4  = Red  665 nm  10 m
-  // Ref: Sentinel-2 Level-2A surface reflectance (ESA Copernicus)
+  // ENGINE SAFETY WRAPPER
+  // SatelliteEngine loads before this file; guard for dev reloads
   // ============================================================
-  const NDVI_COLORMAP = [
-    { val: -1.0, r: 139, g: 0,   b: 0   },  // Dark red (bare soil/water)
-    { val: -0.5, r: 200, g: 50,  b: 50  },  // Red
-    { val:  0.0, r: 210, g: 180, b: 140 },  // Tan (bare soil)
-    { val:  0.1, r: 240, g: 230, b: 100 },  // Yellow (sparse vegetation)
-    { val:  0.25,r: 200, g: 230, b: 80  },  // Yellow-green
-    { val:  0.45,r: 120, g: 200, b: 60  },  // Light green (moderate)
-    { val:  0.65,r: 60,  g: 160, b: 30  },  // Green (healthy)
-    { val:  1.0, r: 0,   g: 100, b: 0   },  // Dark green (dense vegetation)
-  ];
+  function eng() {
+    if (!window.SatelliteEngine) {
+      console.error('[NDVI] SatelliteEngine not loaded. Check script order in index.html.');
+      return null;
+    }
+    return window.SatelliteEngine;
+  }
 
+  // ============================================================
+  // BACKWARD-COMPAT: ndviToRgb (delegates to engine)
+  // ============================================================
   function ndviToRgb(value) {
-    const v = Math.max(-1, Math.min(1, value));
-    for (let i = 0; i < NDVI_COLORMAP.length - 1; i++) {
-      const c1 = NDVI_COLORMAP[i], c2 = NDVI_COLORMAP[i + 1];
-      if (v >= c1.val && v <= c2.val) {
-        const t = (v - c1.val) / (c2.val - c1.val);
-        return {
-          r: Math.round(c1.r + t * (c2.r - c1.r)),
-          g: Math.round(c1.g + t * (c2.g - c1.g)),
-          b: Math.round(c1.b + t * (c2.b - c1.b))
-        };
-      }
-    }
-    return { r: 0, g: 100, b: 0 };
+    const e = eng();
+    return e ? e.getColorForValue('ndvi', value) : { r: 128, g: 128, b: 128 };
   }
 
   // ============================================================
-  // Build tile URLs
-  // ============================================================
-  function getSentinelTileUrl() {
-    // EOX Sentinel-2 Cloudless — real, free satellite imagery
-    return 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg';
-  }
-
-  function getNdviTileUrl(date) {
-    const cfg = window.AgriConfig || {};
-
-    // If GEE tile URL provided (dynamic, set by GEE script)
-    if (cfg.GEE_TILE_URL && cfg.GEE_TILE_URL !== 'null') {
-      return cfg.GEE_TILE_URL;
-    }
-
-    // TiTiler NDVI endpoint (self-hosted or public instance)
-    if (cfg.NDVI_TILE_URL && !cfg.NDVI_TILE_URL.includes('titiler.xyz')) {
-      return cfg.NDVI_TILE_URL;
-    }
-
-    // Placeholder — styled tile showing what NDVI would look like
-    // In production, replace with real GEE endpoint
-    // Format: {z}/{x}/{y}?date=YYYY-MM-DD&bands=NDVI&colormap=rdylgn
-    return `https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg`;
-    // NOTE: ^ This shows actual Sentinel-2 imagery. For real NDVI colors,
-    // deploy a TiTiler instance with Sentinel-2 COGs, or use GEE:
-    // https://developers.google.com/earth-engine/tutorials/tutorial_api_06
-  }
-
-  // ============================================================
-  // Add/Update tile layer
+  // TILE LAYER MANAGEMENT
   // ============================================================
   function setTileLayer(url, options = {}) {
-    const m = window.AgriMap.getMap();
+    const m = window.AgriMap && window.AgriMap.getMap();
     if (!m) return;
-
-    if (tileLayer) {
-      m.removeLayer(tileLayer);
-      tileLayer = null;
-    }
-
+    if (tileLayer) { m.removeLayer(tileLayer); tileLayer = null; }
     tileLayer = L.tileLayer(url, {
       opacity,
       maxZoom: 18,
@@ -95,56 +63,70 @@ window.AgriNDVI = (() => {
       crossOrigin: true,
       ...options
     });
-
     tileLayer.addTo(m);
     isVisible = true;
   }
 
   // ============================================================
-  // Show Sentinel-2 cloudless imagery
+  // SENTINEL-2 RGB (base visual -- unchanged from original)
   // ============================================================
   function showSentinel() {
     currentMode = 'sentinel';
-    setTileLayer(getSentinelTileUrl(), {
-      attribution: '© <a href="https://eox.at">EOX</a> — Sentinel-2 Cloudless 2020'
+    setTileLayer(EOX_URL, {
+      attribution: '© <a href="https://eox.at">EOX</a> -- Sentinel-2 Cloudless 2020'
     });
     updateUI();
   }
 
   // ============================================================
-  // Show NDVI layer for selected date
+  // SHOW INDEX (generic -- replaces showNDVI internally)
   // ============================================================
-  function showNDVI(date) {
+  function showIndex(indexType, date) {
+    const e = eng();
+    if (!e) return;
     if (date) activeDate = date;
-    currentMode = 'ndvi';
-    const url = getNdviTileUrl(activeDate);
+    if (indexType) activeIndex = indexType;
+    currentMode = 'index';
+
+    const url  = e.getTileUrl(activeIndex, activeDate);
+    const cfg  = e.getConfig(activeIndex) || {};
+    const cap  = e.getIndexCapability(activeIndex);
+
     setTileLayer(url, {
-      attribution: '© Sentinel-2 NDVI via GEE/TiTiler'
+      attribution: cap.available
+        ? '© Sentinel-2 ' + cfg.name + ' via GEE/TiTiler'
+        : '© EOX Sentinel-2 Cloudless (visual proxy -- ' + cfg.name + ' requires band source)'
     });
+
     updateUI();
     renderColorLegend();
+    renderLegendRanges();
+    updateCapabilityNotice();
   }
 
   // ============================================================
-  // Toggle layer visibility
+  // BACKWARD COMPAT: showNDVI
+  // ============================================================
+  function showNDVI(date) {
+    showIndex('ndvi', date);
+  }
+
+  // ============================================================
+  // TOGGLE VISIBILITY
   // ============================================================
   function toggle(visible) {
-    const m = window.AgriMap.getMap();
+    const m = window.AgriMap && window.AgriMap.getMap();
     if (!m) return;
-
     if (!visible) {
-      if (tileLayer) {
-        m.removeLayer(tileLayer);
-        isVisible = false;
-      }
+      if (tileLayer) { m.removeLayer(tileLayer); isVisible = false; }
     } else {
-      if (currentMode === 'ndvi') showNDVI(activeDate);
+      if (currentMode === 'index') showIndex(activeIndex, activeDate);
       else showSentinel();
     }
   }
 
   // ============================================================
-  // Set opacity
+  // OPACITY
   // ============================================================
   function setOpacity(value) {
     opacity = parseFloat(value);
@@ -152,16 +134,13 @@ window.AgriNDVI = (() => {
   }
 
   // ============================================================
-  // Set date and reload
+  // DATE
   // ============================================================
   function setDate(date) {
     activeDate = date;
-    if (currentMode === 'ndvi' && isVisible) {
-      showNDVI(date);
-    }
-    // Update date display
-    const dateDisplay = document.getElementById('ndvi-date-display');
-    if (dateDisplay) dateDisplay.textContent = formatDate(date);
+    if (currentMode === 'index' && isVisible) showIndex(activeIndex, date);
+    const el = document.getElementById('ndvi-date-display');
+    if (el) el.textContent = formatDate(date);
   }
 
   function formatDate(dateStr) {
@@ -170,297 +149,349 @@ window.AgriNDVI = (() => {
   }
 
   // ============================================================
-  // Render NDVI color scale legend
+  // SET ACTIVE INDEX (called by selector)
+  // ============================================================
+  function setActiveIndex(indexType) {
+    activeIndex = indexType;
+    if (currentMode === 'index') showIndex(indexType, activeDate);
+    renderColorLegend();
+    renderLegendRanges();
+    updateCapabilityNotice();
+    updateIndexDescription();
+  }
+
+  // ============================================================
+  // RENDER COLORMAP LEGEND BAR (canvas)
   // ============================================================
   function renderColorLegend() {
+    const e = eng();
+    if (!e) return;
     const canvas = document.getElementById('ndvi-color-scale');
     if (!canvas) return;
+    e.renderColormapToCanvas(activeIndex, canvas);
+  }
 
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width = canvas.offsetWidth || 200;
-    const h = canvas.height = 20;
+  // ============================================================
+  // RENDER LEGEND RANGE ROWS
+  // ============================================================
+  function renderLegendRanges() {
+    const e = eng();
+    if (!e) return;
+    const container = document.getElementById('index-legend-ranges');
+    if (!container) return;
 
-    const gradient = ctx.createLinearGradient(0, 0, w, 0);
-    NDVI_COLORMAP.forEach(point => {
-      const stop = (point.val + 1) / 2; // Map -1..1 to 0..1
-      gradient.addColorStop(stop, `rgb(${point.r},${point.g},${point.b})`);
+    const ranges = e.getLegendRanges(activeIndex);
+    container.innerHTML = '';
+    ranges.forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'index-legend-row';
+      row.innerHTML =
+        '<span class="index-legend-swatch" style="background:' + r.color + '"></span>' +
+        '<span class="index-legend-label">' + r.labelHi + '</span>' +
+        '<span class="index-legend-range">' + r.label + '</span>';
+      container.appendChild(row);
     });
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, w, h);
-
-    // Labels
-    ctx.fillStyle = '#fff';
-    ctx.font = '10px Inter';
-    ctx.textAlign = 'left';
-    ctx.fillText('-1', 2, 14);
-    ctx.textAlign = 'center';
-    ctx.fillText('0', w / 2, 14);
-    ctx.textAlign = 'right';
-    ctx.fillText('+1', w - 2, 14);
   }
 
   // ============================================================
-  // Date comparison mode (before/after slider)
+  // UPDATE INDEX DESCRIPTION ROW
   // ============================================================
-  let compareLayer = null;
-  function startDateComparison(date1, date2) {
-    const m = window.AgriMap.getMap();
-    if (!m) return;
+  function updateIndexDescription() {
+    const e = eng();
+    if (!e) return;
+    const cfg = e.getConfig(activeIndex);
+    if (!cfg) return;
 
-    showNDVI(date1);
+    const formulaEl = document.getElementById('index-formula');
+    const bandEl    = document.getElementById('index-band-detail');
+    const descEl    = document.getElementById('index-description');
 
-    if (compareLayer) m.removeLayer(compareLayer);
-
-    // Show second date layer at reduced opacity on top
-    compareLayer = L.tileLayer(getNdviTileUrl(date2), {
-      opacity: 0.5,
-      attribution: `© Sentinel-2 NDVI ${date2}`
-    });
-    compareLayer.addTo(m);
-
-    // Update labels
-    const label = document.getElementById('compare-label');
-    if (label) label.innerHTML = `
-      <span style="color:#22c55e">📅 ${formatDate(date1)}</span> →
-      <span style="color:#f59e0b">📅 ${formatDate(date2)}</span>
-    `;
-  }
-
-  function stopDateComparison() {
-    const m = window.AgriMap.getMap();
-    if (compareLayer && m) {
-      m.removeLayer(compareLayer);
-      compareLayer = null;
-    }
-    const label = document.getElementById('compare-label');
-    if (label) label.innerHTML = '';
+    if (formulaEl) formulaEl.textContent = cfg.formula;
+    if (bandEl)    bandEl.textContent    = cfg.bandDetail;
+    if (descEl)    descEl.textContent    = cfg.descriptionHi;
   }
 
   // ============================================================
-  // Initialize NDVI controls in sidebar
+  // UPDATE CAPABILITY NOTICE
   // ============================================================
-  function initControls() {
-    // Mode toggle buttons
-    const btnSentinel = document.getElementById('btn-sentinel');
-    const btnNDVI = document.getElementById('btn-ndvi');
+  function updateCapabilityNotice() {
+    const e = eng();
+    if (!e) return;
+    const notice = document.getElementById('index-capability-notice');
+    if (!notice) return;
 
-    if (btnSentinel) btnSentinel.addEventListener('click', () => {
-      document.querySelectorAll('.satellite-mode-btn').forEach(b => b.classList.remove('active'));
-      btnSentinel.classList.add('active');
-      showSentinel();
-    });
+    const cap = e.getIndexCapability(activeIndex);
+    const cfg = e.getConfig(activeIndex) || {};
 
-    if (btnNDVI) btnNDVI.addEventListener('click', () => {
-      document.querySelectorAll('.satellite-mode-btn').forEach(b => b.classList.remove('active'));
-      btnNDVI.classList.add('active');
-      showNDVI(activeDate);
-    });
-
-    // Date picker
-    const datePicker = document.getElementById('ndvi-date');
-    if (datePicker) {
-      datePicker.value = activeDate;
-      datePicker.max = new Date().toISOString().slice(0, 10);
-      datePicker.addEventListener('change', () => setDate(datePicker.value));
+    if (cap.available && cfg.dataStatus === 'available') {
+      // NDVI with simulation -- show simulation notice
+      notice.style.display = 'block';
+      notice.className = 'index-capability-notice notice-sim';
+      notice.innerHTML =
+        '<strong>📊 DEMO / SIMULATED</strong> — ' +
+        'खेत के रंग real satellite data नहीं हैं। ' +
+        'GEE/TiTiler connect होने पर real pixel-level ' + cfg.name + ' उपलब्ध होगा।';
+    } else if (!cap.available) {
+      // Requires band source
+      notice.style.display = 'block';
+      notice.className = 'index-capability-notice notice-warn';
+      notice.innerHTML =
+        '<strong>⚠️ DEMO / SIMULATED</strong> — ' +
+        cfg.name + ' के लिए Sentinel-2 bands (' +
+        (cfg.requiredBands || []).join(', ') + ') चाहिए। ' +
+        'वर्तमान source (EOX RGB) इन bands को provide नहीं करता। ' +
+        'GEE या TiTiler configure करें।';
+    } else {
+      notice.style.display = 'none';
     }
-
-    // Opacity slider
-    const opacitySlider = document.getElementById('ndvi-opacity');
-    const opacityValue = document.getElementById('ndvi-opacity-value');
-    if (opacitySlider) {
-      opacitySlider.value = opacity;
-      opacitySlider.addEventListener('input', () => {
-        setOpacity(opacitySlider.value);
-        if (opacityValue) opacityValue.textContent = `${Math.round(opacitySlider.value * 100)}%`;
-      });
-    }
-
-    // Date comparison
-    const compareBtn = document.getElementById('btn-compare-dates');
-    const compareDate1 = document.getElementById('compare-date1');
-    const compareDate2 = document.getElementById('compare-date2');
-    const stopCompareBtn = document.getElementById('btn-stop-compare');
-
-    if (compareBtn) compareBtn.addEventListener('click', () => {
-      if (compareDate1 && compareDate2) {
-        startDateComparison(compareDate1.value, compareDate2.value);
-      }
-    });
-
-    if (stopCompareBtn) stopCompareBtn.addEventListener('click', stopDateComparison);
-
-    // Set default date inputs
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-    if (compareDate1) compareDate1.value = thirtyDaysAgo.toISOString().slice(0, 10);
-    if (compareDate2) compareDate2.value = today.toISOString().slice(0, 10);
-
-    // Time-Lapse Player
-    const playTimelapseBtn = document.getElementById('btn-timelapse-play');
-    const stopTimelapseBtn = document.getElementById('btn-timelapse-stop');
-
-    if (playTimelapseBtn) playTimelapseBtn.addEventListener('click', startTimelapse);
-    if (stopTimelapseBtn) stopTimelapseBtn.addEventListener('click', stopTimelapse);
-
-    // Initialize with sentinel view
-    setTimeout(() => {
-      showSentinel();
-      renderColorLegend();
-    }, 500);
   }
 
   // ============================================================
-  // NDVI Time-Lapse Player Logic
-  // ============================================================
-  let timelapseInterval = null;
-  let timelapseIndex = 0;
-  const TIMELAPSE_DATES = [
-    '2025-12-01',
-    '2026-01-01',
-    '2026-02-01',
-    '2026-03-01',
-    '2026-04-01',
-    '2026-05-01'
-  ];
-
-  function startTimelapse() {
-    if (timelapseInterval) stopTimelapse();
-    
-    // Switch to NDVI mode automatically
-    const btnNDVI = document.getElementById('btn-ndvi');
-    if (btnNDVI && !btnNDVI.classList.contains('active')) {
-      btnNDVI.click();
-    }
-
-    const playBtn = document.getElementById('btn-timelapse-play');
-    const stopBtn = document.getElementById('btn-timelapse-stop');
-    const statusText = document.getElementById('time-lapse-status');
-    const speedSelect = document.getElementById('timelapse-speed');
-
-    if (playBtn) playBtn.disabled = true;
-    if (stopBtn) stopBtn.disabled = false;
-    if (statusText) {
-      statusText.textContent = '▶️ Playing…';
-      statusText.style.color = '#22c55e'; // Green
-    }
-
-    const intervalMs = speedSelect ? parseInt(speedSelect.value) : 1000;
-    timelapseIndex = 0;
-
-    const tick = () => {
-      if (timelapseIndex >= TIMELAPSE_DATES.length) {
-        timelapseIndex = 0; // Loop forever
-      }
-
-      const currentDate = TIMELAPSE_DATES[timelapseIndex];
-      setDate(currentDate);
-      
-      // Update date picker input value
-      const datePicker = document.getElementById('ndvi-date');
-      if (datePicker) datePicker.value = currentDate;
-
-      // Update progress bar
-      const progress = document.getElementById('timelapse-progress');
-      if (progress) {
-        const pct = ((timelapseIndex + 1) / TIMELAPSE_DATES.length) * 100;
-        progress.style.width = `${pct}%`;
-      }
-
-      // Dynamic map polygon color simulation
-      simulateFieldNdviForDate(currentDate);
-
-      timelapseIndex++;
-    };
-
-    tick(); // Run first tick immediately
-    timelapseInterval = setInterval(tick, intervalMs);
-  }
-
-  function stopTimelapse() {
-    if (timelapseInterval) {
-      clearInterval(timelapseInterval);
-      timelapseInterval = null;
-    }
-
-    const playBtn = document.getElementById('btn-timelapse-play');
-    const stopBtn = document.getElementById('btn-timelapse-stop');
-    const statusText = document.getElementById('time-lapse-status');
-    const progress = document.getElementById('timelapse-progress');
-
-    if (playBtn) playBtn.disabled = false;
-    if (stopBtn) stopBtn.disabled = true;
-    if (statusText) {
-      statusText.textContent = '⏹️ Stopped';
-      statusText.style.color = '#eab308'; // Yellow
-    }
-    if (progress) progress.style.width = '0%';
-
-    // Restore original field values from dummy data
-    if (window.AgriFarmers) {
-      window.AgriFarmers.loadData().catch(() => {});
-    }
-  }
-
-  function simulateFieldNdviForDate(dateStr) {
-    if (!window.AgriFarmers) return;
-
-    const fields = window.AgriFarmers.getFields();
-    const month = parseInt(dateStr.split('-')[1]);
-
-    fields.forEach(field => {
-      const seed = field.id ? parseInt(field.id.replace(/\D/g, '')) || 5 : 5;
-      let ndviValue = 0.45;
-      let health = 'moderate';
-
-      if (month === 12) { // Sowing stage
-        ndviValue = 0.22 + (seed % 3) * 0.04;
-        health = ndviValue < 0.25 ? 'stress' : 'moderate';
-      } else if (month === 1) { // Early vegetative
-        ndviValue = 0.35 + (seed % 4) * 0.05;
-        health = ndviValue >= 0.45 ? 'healthy' : 'moderate';
-      } else if (month === 2) { // Peak healthy vegetative growth (Green)
-        ndviValue = 0.58 + (seed % 3) * 0.08;
-        health = 'healthy';
-      } else if (month === 3) { // Sudden frost dry spell (High stress color shift)
-        if (seed % 2 === 0) {
-          ndviValue = 0.14 + (seed % 3) * 0.03;
-          health = 'stress'; // High Red representation
-        } else {
-          ndviValue = 0.38 + (seed % 3) * 0.04;
-          health = 'moderate'; // Yellow
-        }
-      } else if (month === 4) { // Pre-harvest yellowing
-        ndviValue = 0.32 + (seed % 3) * 0.05;
-        health = ndviValue >= 0.45 ? 'healthy' : 'moderate';
-      } else if (month === 5) { // Post-harvest regrowth
-        ndviValue = 0.44 + (seed % 4) * 0.05;
-        health = ndviValue >= 0.48 ? 'healthy' : 'moderate';
-      }
-
-      field.last_ndvi_value = ndviValue;
-      field.health_status = health;
-    });
-
-    // Refresh map polygons
-    window.AgriFarmers.showFieldsOnMap();
-    window.AgriFarmers.updateStats();
-  }
-
-  // ============================================================
-  // Update UI state
+  // UPDATE UI (mode label + date)
   // ============================================================
   function updateUI() {
+    const e = eng();
+    const cfg = e ? e.getConfig(activeIndex) : null;
+
     const modeLabel = document.getElementById('satellite-mode-label');
     if (modeLabel) {
-      modeLabel.textContent = currentMode === 'ndvi' ? '🛰️ NDVI मोड' : '🛰️ Sentinel-2 मोड';
+      modeLabel.textContent = currentMode === 'index'
+        ? '🛰️ ' + (cfg ? cfg.name + ' मोड' : 'Index मोड')
+        : '🛰️ Sentinel-2 मोड';
     }
     const dateDisplay = document.getElementById('ndvi-date-display');
     if (dateDisplay) dateDisplay.textContent = formatDate(activeDate);
   }
 
+  // ============================================================
+  // DATE COMPARISON (unchanged from original)
+  // ============================================================
+  function startDateComparison(date1, date2) {
+    const m = window.AgriMap && window.AgriMap.getMap();
+    if (!m) return;
+    showIndex(activeIndex, date1);
+    if (compareLayer) m.removeLayer(compareLayer);
+    const e = eng();
+    compareLayer = L.tileLayer(e ? e.getTileUrl(activeIndex, date2) : EOX_URL, {
+      opacity: 0.5,
+      attribution: '© Sentinel-2 ' + activeIndex.toUpperCase() + ' ' + date2
+    });
+    compareLayer.addTo(m);
+    const label = document.getElementById('compare-label');
+    if (label) label.innerHTML =
+      '<span style="color:#22c55e">📅 ' + formatDate(date1) + '</span> &rarr; ' +
+      '<span style="color:#f59e0b">📅 ' + formatDate(date2) + '</span>';
+  }
+
+  function stopDateComparison() {
+    const m = window.AgriMap && window.AgriMap.getMap();
+    if (compareLayer && m) { m.removeLayer(compareLayer); compareLayer = null; }
+    const label = document.getElementById('compare-label');
+    if (label) label.innerHTML = '';
+  }
+
+  // ============================================================
+  // TIME-LAPSE (extended to handle all indices)
+  // ============================================================
+  let timelapseInterval = null;
+  let timelapseIndex    = 0;
+  const TIMELAPSE_DATES = [
+    '2025-12-01', '2026-01-01', '2026-02-01',
+    '2026-03-01', '2026-04-01', '2026-05-01'
+  ];
+
+  function startTimelapse() {
+    if (timelapseInterval) stopTimelapse();
+
+    // Switch to index mode
+    const btnIdx = document.getElementById('btn-index');
+    if (btnIdx && !btnIdx.classList.contains('active')) btnIdx.click();
+
+    const playBtn    = document.getElementById('btn-timelapse-play');
+    const stopBtn    = document.getElementById('btn-timelapse-stop');
+    const statusText = document.getElementById('time-lapse-status');
+    const speedSel   = document.getElementById('timelapse-speed');
+
+    if (playBtn)    playBtn.disabled = true;
+    if (stopBtn)    stopBtn.disabled = false;
+    if (statusText) { statusText.textContent = '▶️ Playing…'; statusText.style.color = '#22c55e'; }
+
+    const intervalMs = speedSel ? parseInt(speedSel.value) : 1000;
+    timelapseIndex = 0;
+
+    const tick = () => {
+      if (timelapseIndex >= TIMELAPSE_DATES.length) timelapseIndex = 0;
+      const currentDate = TIMELAPSE_DATES[timelapseIndex];
+      setDate(currentDate);
+      const dp = document.getElementById('ndvi-date');
+      if (dp) dp.value = currentDate;
+      const progress = document.getElementById('timelapse-progress');
+      if (progress) progress.style.width = (((timelapseIndex + 1) / TIMELAPSE_DATES.length) * 100) + '%';
+      simulateFieldIndexForDate(currentDate);
+      timelapseIndex++;
+    };
+
+    tick();
+    timelapseInterval = setInterval(tick, intervalMs);
+  }
+
+  function stopTimelapse() {
+    if (timelapseInterval) { clearInterval(timelapseInterval); timelapseInterval = null; }
+    const playBtn    = document.getElementById('btn-timelapse-play');
+    const stopBtn    = document.getElementById('btn-timelapse-stop');
+    const statusText = document.getElementById('time-lapse-status');
+    const progress   = document.getElementById('timelapse-progress');
+    if (playBtn)    playBtn.disabled  = false;
+    if (stopBtn)    stopBtn.disabled  = true;
+    if (statusText) { statusText.textContent = '⏹️ Stopped'; statusText.style.color = '#eab308'; }
+    if (progress)   progress.style.width = '0%';
+    if (window.AgriFarmers) window.AgriFarmers.loadData().catch(() => {});
+  }
+
+  // ============================================================
+  // FIELD SIMULATION (DEMO -- NOT satellite-derived)
+  // Extended from original simulateFieldNdviForDate to handle all indices
+  // ============================================================
+  function simulateFieldIndexForDate(dateStr) {
+    if (!window.AgriFarmers) return;
+    const e = eng();
+    if (!e) return;
+
+    const fields = window.AgriFarmers.getFields();
+    const month  = parseInt(dateStr.split('-')[1]);
+
+    fields.forEach(field => {
+      const seed = field.id ? parseInt(field.id.replace(/\D/g, '')) || 5 : 5;
+      const val  = e.simulateValue(activeIndex, seed, month);
+      const cls  = e.classifyValue(activeIndex, val);
+
+      // Always update NDVI for health_status (backward compat with field cards)
+      field.last_ndvi_value = activeIndex === 'ndvi'
+        ? val
+        : e.simulateValue('ndvi', seed, month);
+      field.health_status = cls;
+
+      // Store index-specific value
+      field['last_' + activeIndex + '_value'] = val;
+    });
+
+    window.AgriFarmers.showFieldsOnMap();
+    window.AgriFarmers.updateStats();
+  }
+
+  // Backward-compat alias used by timelapse originally
+  function simulateFieldNdviForDate(dateStr) {
+    simulateFieldIndexForDate(dateStr);
+  }
+
+  // ============================================================
+  // INIT CONTROLS
+  // ============================================================
+  function initControls() {
+    // --- Sentinel-2 button (unchanged) ---
+    const btnSentinel = document.getElementById('btn-sentinel');
+    if (btnSentinel) {
+      btnSentinel.addEventListener('click', () => {
+        document.querySelectorAll('.satellite-mode-btn').forEach(b => b.classList.remove('active'));
+        btnSentinel.classList.add('active');
+        showSentinel();
+        // Hide capability notice when on plain Sentinel view
+        const notice = document.getElementById('index-capability-notice');
+        if (notice) notice.style.display = 'none';
+      });
+    }
+
+    // --- Backward-compat: old btn-ndvi button (may still exist in HTML during transition) ---
+    const btnNDVILegacy = document.getElementById('btn-ndvi');
+    if (btnNDVILegacy) {
+      btnNDVILegacy.addEventListener('click', () => {
+        document.querySelectorAll('.satellite-mode-btn').forEach(b => b.classList.remove('active'));
+        btnNDVILegacy.classList.add('active');
+        setActiveIndex('ndvi');
+        showIndex('ndvi', activeDate);
+      });
+    }
+
+    // --- New: Index button ---
+    const btnIndex = document.getElementById('btn-index');
+    if (btnIndex) {
+      btnIndex.addEventListener('click', () => {
+        document.querySelectorAll('.satellite-mode-btn').forEach(b => b.classList.remove('active'));
+        btnIndex.classList.add('active');
+        showIndex(activeIndex, activeDate);
+      });
+    }
+
+    // --- Index Selector dropdown ---
+    const selector = document.getElementById('index-selector');
+    if (selector) {
+      selector.value = activeIndex;
+      selector.addEventListener('change', () => {
+        setActiveIndex(selector.value);
+        // Auto-switch to index mode if on sentinel
+        if (currentMode !== 'index') {
+          if (btnIndex) btnIndex.click();
+          else showIndex(selector.value, activeDate);
+        }
+      });
+    }
+
+    // --- Date picker ---
+    const datePicker = document.getElementById('ndvi-date');
+    if (datePicker) {
+      datePicker.value = activeDate;
+      datePicker.max   = new Date().toISOString().slice(0, 10);
+      datePicker.addEventListener('change', () => setDate(datePicker.value));
+    }
+
+    // --- Opacity slider ---
+    const opacitySlider = document.getElementById('ndvi-opacity');
+    const opacityValue  = document.getElementById('ndvi-opacity-value');
+    if (opacitySlider) {
+      opacitySlider.value = opacity;
+      opacitySlider.addEventListener('input', () => {
+        setOpacity(opacitySlider.value);
+        if (opacityValue) opacityValue.textContent = Math.round(opacitySlider.value * 100) + '%';
+      });
+    }
+
+    // --- Date comparison ---
+    const compareBtn  = document.getElementById('btn-compare-dates');
+    const cDate1      = document.getElementById('compare-date1');
+    const cDate2      = document.getElementById('compare-date2');
+    const stopCmpBtn  = document.getElementById('btn-stop-compare');
+    if (compareBtn)  compareBtn.addEventListener('click',  () => { if (cDate1 && cDate2) startDateComparison(cDate1.value, cDate2.value); });
+    if (stopCmpBtn)  stopCmpBtn.addEventListener('click',  stopDateComparison);
+
+    const today = new Date();
+    const minus30 = new Date(today.getTime() - 30 * 86400000);
+    if (cDate1) cDate1.value = minus30.toISOString().slice(0, 10);
+    if (cDate2) cDate2.value = today.toISOString().slice(0, 10);
+
+    // --- Timelapse ---
+    const playBtn = document.getElementById('btn-timelapse-play');
+    const stopBtn = document.getElementById('btn-timelapse-stop');
+    if (playBtn) playBtn.addEventListener('click', startTimelapse);
+    if (stopBtn) stopBtn.addEventListener('click', stopTimelapse);
+
+    // --- Initialize UI ---
+    setTimeout(() => {
+      showSentinel();
+      renderColorLegend();
+      renderLegendRanges();
+      updateIndexDescription();
+      updateCapabilityNotice();
+    }, 500);
+  }
+
+  // ============================================================
+  // PUBLIC API
+  // ============================================================
   return {
+    // Init
     init: initControls,
+
+    // Existing exports (unchanged)
     showSentinel,
     showNDVI,
     toggle,
@@ -472,7 +503,14 @@ window.AgriNDVI = (() => {
     ndviToRgb,
     startTimelapse,
     stopTimelapse,
-    getActiveDate: () => activeDate,
+    getActiveDate:  () => activeDate,
     getCurrentMode: () => currentMode,
+
+    // New exports
+    showIndex,
+    setActiveIndex,
+    getActiveIndex: () => activeIndex,
+    simulateFieldIndexForDate,
+    simulateFieldNdviForDate,  // backward compat
   };
 })();
