@@ -537,7 +537,7 @@ window.CRAReport = (() => {
         <div class="legend-item"><div class="legend-box" style="background:#1a5276"></div> GP Boundary (Approx)</div>
         <div class="legend-item"><div class="legend-dot" style="background:#1e40af"></div> Settlements / Villages</div>
         <div class="legend-item"><div class="legend-box" style="background:#3b82f6;width:20px;height:4px"></div> Stream / Drainage (Synthetic)</div>
-        <div class="legend-item" style="margin-top:6px"><b style="font-size:9px;color:#374151">NDVI (Vegetation Health)</b></div>
+        <div class="legend-item" style="margin-top:6px"><b style="font-size:9px;color:#374151">NDVI — S2 B8(NIR 842nm) ÷ B4(Red 665nm)</b></div>
         <div class="legend-item"><div class="legend-box" style="background:#166534"></div> 0.6–1.0 (Very Good)</div>
         <div class="legend-item"><div class="legend-box" style="background:#86efac"></div> 0.4–0.6 (Good)</div>
         <div class="legend-item"><div class="legend-box" style="background:#fde68a"></div> 0.2–0.4 (Moderate)</div>

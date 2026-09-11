@@ -14,6 +14,10 @@ window.AgriNDVI = (() => {
 
   // ============================================================
   // NDVI Color Scale (Red → Yellow → Green: -1 to +1)
+  // Formula: NDVI = (B8 − B4) / (B8 + B4)
+  //   B8  = NIR  842 nm  10 m  (Sentinel-2 MSI)
+  //   B4  = Red  665 nm  10 m
+  // Ref: Sentinel-2 Level-2A surface reflectance (ESA Copernicus)
   // ============================================================
   const NDVI_COLORMAP = [
     { val: -1.0, r: 139, g: 0,   b: 0   },  // Dark red (bare soil/water)

@@ -424,14 +424,20 @@
             </div>
           </div>
 
-          <!-- GEE Info -->
+          <!-- Sentinel-2 Band Reference & GEE Info -->
           <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:10px;font-size:11px;color:var(--text-muted)">
-            <strong style="color:var(--teal)">ℹ️ Sentinel-2 एकीकरण</strong><br><br>
-            वर्तमान में EOX Sentinel-2 Cloudless 2020 दिखाया जा रहा है।<br><br>
-            Real-time NDVI के लिए:<br>
-            • Google Earth Engine account बनाएं<br>
+            <strong style="color:var(--teal)">ℹ️ Sentinel-2 MSI — बैंड जानकारी</strong><br><br>
+            <span style="color:var(--text-secondary)">📐 NDVI सूत्र:</span>
+            <span style="color:var(--green);font-family:monospace;font-size:10.5px"> (B8 − B4) / (B8 + B4)</span><br>
+            <span style="font-size:10px">B8 = NIR 842 nm (10 m) &nbsp;|&nbsp; B4 = Red 665 nm (10 m)</span><br><br>
+            <span style="color:var(--text-secondary)">🔴 Red-Edge बैंड</span> <span style="font-size:10px">(फसल तनाव जांच):</span><br>
+            <span style="font-size:10px">B5 = 705 nm &nbsp;|&nbsp; B6 = 740 nm &nbsp;|&nbsp; B7 = 783 nm (20 m)</span><br><br>
+            <span style="color:var(--text-secondary)">💧 SWIR बैंड</span> <span style="font-size:10px">(मिट्टी नमी / जल सामग्री):</span><br>
+            <span style="font-size:10px">B11 = 1610 nm &nbsp;|&nbsp; B12 = 2190 nm (20 m)</span><br><br>
+            <span style="color:var(--text-secondary)">🔗 Real-time NDVI के लिए:</span><br>
+            • Google Earth Engine (GEE) account बनाएं<br>
             • js/config.js में GEE_TILE_URL सेट करें<br>
-            • या TiTiler instance deploy करें
+            • या TiTiler instance deploy करें (L2A COGs)
           </div>
         </div><!-- /tab-satellite -->
 
