@@ -383,6 +383,21 @@
           <!-- Data Limitation / Simulation Notice -->
           <div id="index-capability-notice" class="index-capability-notice notice-sim" style="display:none;"></div>
 
+          <!-- Real Satellite Data Badge (shown when GEE tiles load successfully) -->
+          <div id="sat-data-source-badge" class="sat-data-badge badge-real" style="display:none;">
+            <span class="badge-dot"></span>
+            <span></span>
+          </div>
+
+          <!-- Acquired Date Notice (shown when actual imagery date differs from requested) -->
+          <div id="sat-acquired-date" class="sat-acquired-date" style="display:none;"></div>
+
+          <!-- GEE Loading Spinner (async tile fetch in progress) -->
+          <div id="sat-loading-spinner" class="sat-loading-spinner" style="display:none;">
+            <span class="sat-spinner-ring"></span>
+            <span>GEE imagery लोड हो रही है…</span>
+          </div>
+
           <!-- Date selector -->
           <div class="ndvi-control-group">
             <div class="control-label">

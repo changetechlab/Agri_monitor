@@ -3,16 +3,13 @@
  * Multi-Index Satellite Visualization
  * Supports: NDVI, NDRE, NDWI, NDBI (via SatelliteEngine)
  *
- * DATA SOURCE: EOX Sentinel-2 Cloudless 2020 (RGB tiles -- no individual bands)
- * Real per-pixel index computation requires GEE or TiTiler (see satellite-engine.js).
- * Field polygon coloring uses SIMULATED values (clearly labelled in UI).
+ * DATA:
+ *   REAL: /api/gee-tiles (Vercel) -> GEE -> S2_SR_HARMONIZED -> SCL mask -> index
+ *   FALLBACK: EOX Sentinel-2 Cloudless 2020 (RGB composite, no individual bands)
+ *   FIELD POLYGONS: DEMO/SIMULATED values (clearly labelled)
  *
- * Preserves all existing exports for backward compatibility:
- *   showSentinel, showNDVI, toggle, setOpacity, setDate,
- *   renderColorLegend, startDateComparison, stopDateComparison,
- *   ndviToRgb, startTimelapse, stopTimelapse, getActiveDate, getCurrentMode
- *
- * New exports: showIndex, setActiveIndex, getActiveIndex
+ * All existing exports preserved for backward compatibility.
+ * New: showIndex() is async; fetchTileUrl() used from SatelliteEngine.
  *
  * Exposes: window.AgriNDVI
  */
@@ -23,26 +20,25 @@ window.AgriNDVI = (() => {
   let activeDate   = new Date().toISOString().slice(0, 10);
   let opacity      = 0.8;
   let currentMode  = 'sentinel';   // 'sentinel' | 'index' | 'off'
-  let activeIndex  = 'ndvi';       // currently selected index type
+  let activeIndex  = 'ndvi';
   let isVisible    = false;
+  let _lastGEEMeta = null;         // metadata from last successful GEE response
 
-  // Sentinel tile URL (unchanged from original)
   const EOX_URL = 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg';
 
   // ============================================================
-  // ENGINE SAFETY WRAPPER
-  // SatelliteEngine loads before this file; guard for dev reloads
+  // ENGINE WRAPPER
   // ============================================================
   function eng() {
     if (!window.SatelliteEngine) {
-      console.error('[NDVI] SatelliteEngine not loaded. Check script order in index.html.');
+      console.error('[NDVI] SatelliteEngine not loaded.');
       return null;
     }
     return window.SatelliteEngine;
   }
 
   // ============================================================
-  // BACKWARD-COMPAT: ndviToRgb (delegates to engine)
+  // BACKWARD-COMPAT: ndviToRgb
   // ============================================================
   function ndviToRgb(value) {
     const e = eng();
@@ -50,66 +46,98 @@ window.AgriNDVI = (() => {
   }
 
   // ============================================================
+  // LOADING STATE
+  // ============================================================
+  function setLoadingState(loading) {
+    const spinner  = document.getElementById('sat-loading-spinner');
+    const btnIndex = document.getElementById('btn-index');
+    if (spinner) spinner.style.display = loading ? 'flex' : 'none';
+    if (btnIndex) btnIndex.disabled = loading;
+  }
+
+  // ============================================================
   // TILE LAYER MANAGEMENT
   // ============================================================
-  function setTileLayer(url, options = {}) {
+  function setTileLayer(url, options) {
     const m = window.AgriMap && window.AgriMap.getMap();
     if (!m) return;
     if (tileLayer) { m.removeLayer(tileLayer); tileLayer = null; }
     tileLayer = L.tileLayer(url, {
       opacity,
       maxZoom: 18,
-      attribution: options.attribution || '© EOX / ESA Sentinel-2',
+      attribution: (options && options.attribution) || '© EOX / ESA Sentinel-2',
       crossOrigin: true,
-      ...options
     });
     tileLayer.addTo(m);
     isVisible = true;
   }
 
   // ============================================================
-  // SENTINEL-2 RGB (base visual -- unchanged from original)
+  // SENTINEL-2 RGB (unchanged base visual)
   // ============================================================
   function showSentinel() {
     currentMode = 'sentinel';
-    setTileLayer(EOX_URL, {
-      attribution: '© <a href="https://eox.at">EOX</a> -- Sentinel-2 Cloudless 2020'
-    });
+    setTileLayer(EOX_URL, { attribution: '© <a href="https://eox.at">EOX</a> — Sentinel-2 Cloudless 2020' });
     updateUI();
+    _hideTileSourceBadge();
+    const notice = document.getElementById('index-capability-notice');
+    if (notice) notice.style.display = 'none';
   }
 
   // ============================================================
-  // SHOW INDEX (generic -- replaces showNDVI internally)
+  // SHOW INDEX -- ASYNC (core new function)
+  // Fetches real GEE tiles; falls back to EOX if unavailable
   // ============================================================
-  function showIndex(indexType, date) {
+  async function showIndex(indexType, date) {
     const e = eng();
     if (!e) return;
     if (date) activeDate = date;
     if (indexType) activeIndex = indexType;
     currentMode = 'index';
 
-    const url  = e.getTileUrl(activeIndex, activeDate);
-    const cfg  = e.getConfig(activeIndex) || {};
-    const cap  = e.getIndexCapability(activeIndex);
-
-    setTileLayer(url, {
-      attribution: cap.available
-        ? '© Sentinel-2 ' + cfg.name + ' via GEE/TiTiler'
-        : '© EOX Sentinel-2 Cloudless (visual proxy -- ' + cfg.name + ' requires band source)'
-    });
-
+    setLoadingState(true);
     updateUI();
     renderColorLegend();
     renderLegendRanges();
-    updateCapabilityNotice();
+    updateIndexDescription();
+
+    try {
+      const result = await e.fetchTileUrl(activeIndex, activeDate);
+
+      if (result && result.tileUrl) {
+        const isReal = result.isReal === true;
+        _lastGEEMeta = result;
+
+        setTileLayer(result.tileUrl, {
+          attribution: isReal
+            ? '© GEE / ESA Copernicus — Sentinel-2 L2A | SCL masked'
+            : '© EOX Sentinel-2 Cloudless 2020 (RGB proxy — ' + activeIndex.toUpperCase() + ' requires band source)',
+        });
+
+        _updateTileSourceBadge(isReal, result);
+        updateCapabilityNotice(isReal, result);
+        _updateAcquiredDateDisplay(isReal, result);
+
+      } else {
+        // No imagery for this date — keep current tile, show info
+        const meta = (result && result.meta) || {};
+        _updateNoImageryState(meta.message || 'कोई imagery नहीं मिली इस दिनांक के लिए।');
+        updateCapabilityNotice(false, result);
+      }
+    } catch (err) {
+      console.warn('[NDVI] showIndex error:', err.message);
+      // EOX fallback
+      setTileLayer(EOX_URL, { attribution: '© EOX Sentinel-2 Cloudless 2020 (fallback)' });
+      updateCapabilityNotice(false, null);
+    } finally {
+      setLoadingState(false);
+    }
   }
 
   // ============================================================
   // BACKWARD COMPAT: showNDVI
   // ============================================================
-  function showNDVI(date) {
-    showIndex('ndvi', date);
-  }
+  function showNDVI(date) { return showIndex('ndvi', date); }
 
   // ============================================================
   // TOGGLE VISIBILITY
@@ -149,19 +177,19 @@ window.AgriNDVI = (() => {
   }
 
   // ============================================================
-  // SET ACTIVE INDEX (called by selector)
+  // SET ACTIVE INDEX
   // ============================================================
   function setActiveIndex(indexType) {
     activeIndex = indexType;
     if (currentMode === 'index') showIndex(indexType, activeDate);
     renderColorLegend();
     renderLegendRanges();
-    updateCapabilityNotice();
+    updateCapabilityNotice(false, null);
     updateIndexDescription();
   }
 
   // ============================================================
-  // RENDER COLORMAP LEGEND BAR (canvas)
+  // COLORMAP LEGEND BAR (canvas)
   // ============================================================
   function renderColorLegend() {
     const e = eng();
@@ -172,14 +200,13 @@ window.AgriNDVI = (() => {
   }
 
   // ============================================================
-  // RENDER LEGEND RANGE ROWS
+  // LEGEND RANGE ROWS
   // ============================================================
   function renderLegendRanges() {
     const e = eng();
     if (!e) return;
     const container = document.getElementById('index-legend-ranges');
     if (!container) return;
-
     const ranges = e.getLegendRanges(activeIndex);
     container.innerHTML = '';
     ranges.forEach(r => {
@@ -194,65 +221,118 @@ window.AgriNDVI = (() => {
   }
 
   // ============================================================
-  // UPDATE INDEX DESCRIPTION ROW
+  // INDEX DESCRIPTION
   // ============================================================
   function updateIndexDescription() {
     const e = eng();
     if (!e) return;
     const cfg = e.getConfig(activeIndex);
     if (!cfg) return;
-
     const formulaEl = document.getElementById('index-formula');
     const bandEl    = document.getElementById('index-band-detail');
     const descEl    = document.getElementById('index-description');
-
     if (formulaEl) formulaEl.textContent = cfg.formula;
     if (bandEl)    bandEl.textContent    = cfg.bandDetail;
     if (descEl)    descEl.textContent    = cfg.descriptionHi;
   }
 
   // ============================================================
-  // UPDATE CAPABILITY NOTICE
+  // CAPABILITY / DATA-SOURCE NOTICE
   // ============================================================
-  function updateCapabilityNotice() {
+  function updateCapabilityNotice(isReal, result) {
     const e = eng();
     if (!e) return;
     const notice = document.getElementById('index-capability-notice');
     if (!notice) return;
-
-    const cap = e.getIndexCapability(activeIndex);
     const cfg = e.getConfig(activeIndex) || {};
 
-    if (cap.available && cfg.dataStatus === 'available') {
-      // NDVI with simulation -- show simulation notice
+    if (isReal) {
+      // Real GEE data -- show green badge (handled by _updateTileSourceBadge)
+      notice.style.display = 'none';
+    } else if (result && result.meta && result.meta.error === 'no_imagery') {
+      notice.style.display = 'block';
+      notice.className = 'index-capability-notice notice-warn';
+      notice.innerHTML =
+        '<strong>📅 कोई imagery नहीं</strong> — ' +
+        (result.meta.message || 'इस दिनांक के लिए cloud-free Sentinel-2 imagery उपलब्ध नहीं।') +
+        ' दूसरा दिनांक चुनें।';
+    } else {
       notice.style.display = 'block';
       notice.className = 'index-capability-notice notice-sim';
       notice.innerHTML =
         '<strong>📊 DEMO / SIMULATED</strong> — ' +
         'खेत के रंग real satellite data नहीं हैं। ' +
-        'GEE/TiTiler connect होने पर real pixel-level ' + cfg.name + ' उपलब्ध होगा।';
-    } else if (!cap.available) {
-      // Requires band source
-      notice.style.display = 'block';
-      notice.className = 'index-capability-notice notice-warn';
-      notice.innerHTML =
-        '<strong>⚠️ DEMO / SIMULATED</strong> — ' +
-        cfg.name + ' के लिए Sentinel-2 bands (' +
-        (cfg.requiredBands || []).join(', ') + ') चाहिए। ' +
-        'वर्तमान source (EOX RGB) इन bands को provide नहीं करता। ' +
-        'GEE या TiTiler configure करें।';
-    } else {
-      notice.style.display = 'none';
+        'GEE configured होने के बाद real ' + cfg.name + ' tiles load होंगे।';
     }
   }
 
   // ============================================================
-  // UPDATE UI (mode label + date)
+  // TILE SOURCE BADGE (REAL SATELLITE DATA indicator)
+  // ============================================================
+  function _updateTileSourceBadge(isReal, result) {
+    const badge = document.getElementById('sat-data-source-badge');
+    if (!badge) return;
+
+    if (isReal && result) {
+      badge.style.display = 'flex';
+      badge.className = 'sat-data-badge badge-real';
+      const dateStr = result.acquiredDate
+        ? ' | ' + result.acquiredDate + (result.windowDays > 15 ? ' (±30d)' : ' (±15d)')
+        : '';
+      const imgCount = result.imageCount ? ' | ' + result.imageCount + ' images' : '';
+      badge.innerHTML =
+        '<span class="badge-dot"></span>' +
+        '<span>✅ Real Satellite Data — S2 L2A | SCL masked' + dateStr + imgCount + '</span>';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  function _hideTileSourceBadge() {
+    const badge = document.getElementById('sat-data-source-badge');
+    if (badge) badge.style.display = 'none';
+  }
+
+  // ============================================================
+  // ACQUIRED DATE DISPLAY
+  // Shows the actual imagery date when different from requested date
+  // ============================================================
+  function _updateAcquiredDateDisplay(isReal, result) {
+    const el = document.getElementById('sat-acquired-date');
+    if (!el) return;
+    if (isReal && result && result.acquiredDate) {
+      const requested = result.requestedDate;
+      const acquired  = result.acquiredDate;
+      if (requested !== acquired) {
+        el.style.display = 'block';
+        el.textContent = '📸 वास्तविक imagery: ' + acquired +
+          ' (requested: ' + requested + ')';
+      } else {
+        el.style.display = 'none';
+      }
+    } else {
+      el.style.display = 'none';
+    }
+  }
+
+  // ============================================================
+  // NO IMAGERY STATE
+  // ============================================================
+  function _updateNoImageryState(message) {
+    const notice = document.getElementById('index-capability-notice');
+    if (notice) {
+      notice.style.display = 'block';
+      notice.className = 'index-capability-notice notice-warn';
+      notice.innerHTML = '<strong>📅 कोई imagery नहीं</strong> — ' + message;
+    }
+  }
+
+  // ============================================================
+  // UPDATE UI (mode label)
   // ============================================================
   function updateUI() {
     const e = eng();
     const cfg = e ? e.getConfig(activeIndex) : null;
-
     const modeLabel = document.getElementById('satellite-mode-label');
     if (modeLabel) {
       modeLabel.textContent = currentMode === 'index'
@@ -264,19 +344,27 @@ window.AgriNDVI = (() => {
   }
 
   // ============================================================
-  // DATE COMPARISON (unchanged from original)
+  // DATE COMPARISON (async)
   // ============================================================
-  function startDateComparison(date1, date2) {
+  async function startDateComparison(date1, date2) {
     const m = window.AgriMap && window.AgriMap.getMap();
     if (!m) return;
-    showIndex(activeIndex, date1);
-    if (compareLayer) m.removeLayer(compareLayer);
     const e = eng();
-    compareLayer = L.tileLayer(e ? e.getTileUrl(activeIndex, date2) : EOX_URL, {
+
+    await showIndex(activeIndex, date1);
+
+    if (compareLayer) m.removeLayer(compareLayer);
+
+    // Fetch second date tile
+    const result2 = e ? await e.fetchTileUrl(activeIndex, date2) : null;
+    const url2    = (result2 && result2.tileUrl) ? result2.tileUrl : EOX_URL;
+
+    compareLayer = L.tileLayer(url2, {
       opacity: 0.5,
-      attribution: '© Sentinel-2 ' + activeIndex.toUpperCase() + ' ' + date2
+      attribution: '© Sentinel-2 ' + activeIndex.toUpperCase() + ' ' + date2,
     });
     compareLayer.addTo(m);
+
     const label = document.getElementById('compare-label');
     if (label) label.innerHTML =
       '<span style="color:#22c55e">📅 ' + formatDate(date1) + '</span> &rarr; ' +
@@ -291,7 +379,7 @@ window.AgriNDVI = (() => {
   }
 
   // ============================================================
-  // TIME-LAPSE (extended to handle all indices)
+  // TIME-LAPSE
   // ============================================================
   let timelapseInterval = null;
   let timelapseIndex    = 0;
@@ -303,9 +391,8 @@ window.AgriNDVI = (() => {
   function startTimelapse() {
     if (timelapseInterval) stopTimelapse();
 
-    // Switch to index mode
-    const btnIdx = document.getElementById('btn-index');
-    if (btnIdx && !btnIdx.classList.contains('active')) btnIdx.click();
+    const btnIndex = document.getElementById('btn-index');
+    if (btnIndex && !btnIndex.classList.contains('active')) btnIndex.click();
 
     const playBtn    = document.getElementById('btn-timelapse-play');
     const stopBtn    = document.getElementById('btn-timelapse-stop');
@@ -322,12 +409,20 @@ window.AgriNDVI = (() => {
     const tick = () => {
       if (timelapseIndex >= TIMELAPSE_DATES.length) timelapseIndex = 0;
       const currentDate = TIMELAPSE_DATES[timelapseIndex];
-      setDate(currentDate);
+
+      // Update date display and picker (don't await GEE in interval -- use simulation for timelapse)
+      activeDate = currentDate;
       const dp = document.getElementById('ndvi-date');
       if (dp) dp.value = currentDate;
+      const dateDisplay = document.getElementById('ndvi-date-display');
+      if (dateDisplay) dateDisplay.textContent = formatDate(currentDate);
+
       const progress = document.getElementById('timelapse-progress');
       if (progress) progress.style.width = (((timelapseIndex + 1) / TIMELAPSE_DATES.length) * 100) + '%';
+
+      // Simulate field colors for this date (not GEE -- timelapse uses simulation)
       simulateFieldIndexForDate(currentDate);
+
       timelapseIndex++;
     };
 
@@ -350,59 +445,44 @@ window.AgriNDVI = (() => {
 
   // ============================================================
   // FIELD SIMULATION (DEMO -- NOT satellite-derived)
-  // Extended from original simulateFieldNdviForDate to handle all indices
   // ============================================================
   function simulateFieldIndexForDate(dateStr) {
     if (!window.AgriFarmers) return;
     const e = eng();
     if (!e) return;
-
     const fields = window.AgriFarmers.getFields();
     const month  = parseInt(dateStr.split('-')[1]);
-
     fields.forEach(field => {
       const seed = field.id ? parseInt(field.id.replace(/\D/g, '')) || 5 : 5;
       const val  = e.simulateValue(activeIndex, seed, month);
       const cls  = e.classifyValue(activeIndex, val);
-
-      // Always update NDVI for health_status (backward compat with field cards)
-      field.last_ndvi_value = activeIndex === 'ndvi'
-        ? val
-        : e.simulateValue('ndvi', seed, month);
-      field.health_status = cls;
-
-      // Store index-specific value
+      field.last_ndvi_value = activeIndex === 'ndvi' ? val : e.simulateValue('ndvi', seed, month);
+      field.health_status   = cls;
       field['last_' + activeIndex + '_value'] = val;
     });
-
     window.AgriFarmers.showFieldsOnMap();
     window.AgriFarmers.updateStats();
   }
 
-  // Backward-compat alias used by timelapse originally
-  function simulateFieldNdviForDate(dateStr) {
-    simulateFieldIndexForDate(dateStr);
-  }
+  function simulateFieldNdviForDate(dateStr) { simulateFieldIndexForDate(dateStr); }
 
   // ============================================================
   // INIT CONTROLS
   // ============================================================
   function initControls() {
-    // --- Sentinel-2 button (unchanged) ---
-    const btnSentinel = document.getElementById('btn-sentinel');
+    const btnSentinel   = document.getElementById('btn-sentinel');
+    const btnIndex      = document.getElementById('btn-index');
+    const btnNDVILegacy = document.getElementById('btn-ndvi');
+    const selector      = document.getElementById('index-selector');
+
     if (btnSentinel) {
       btnSentinel.addEventListener('click', () => {
         document.querySelectorAll('.satellite-mode-btn').forEach(b => b.classList.remove('active'));
         btnSentinel.classList.add('active');
         showSentinel();
-        // Hide capability notice when on plain Sentinel view
-        const notice = document.getElementById('index-capability-notice');
-        if (notice) notice.style.display = 'none';
       });
     }
 
-    // --- Backward-compat: old btn-ndvi button (may still exist in HTML during transition) ---
-    const btnNDVILegacy = document.getElementById('btn-ndvi');
     if (btnNDVILegacy) {
       btnNDVILegacy.addEventListener('click', () => {
         document.querySelectorAll('.satellite-mode-btn').forEach(b => b.classList.remove('active'));
@@ -412,8 +492,6 @@ window.AgriNDVI = (() => {
       });
     }
 
-    // --- New: Index button ---
-    const btnIndex = document.getElementById('btn-index');
     if (btnIndex) {
       btnIndex.addEventListener('click', () => {
         document.querySelectorAll('.satellite-mode-btn').forEach(b => b.classList.remove('active'));
@@ -422,13 +500,10 @@ window.AgriNDVI = (() => {
       });
     }
 
-    // --- Index Selector dropdown ---
-    const selector = document.getElementById('index-selector');
     if (selector) {
       selector.value = activeIndex;
       selector.addEventListener('change', () => {
         setActiveIndex(selector.value);
-        // Auto-switch to index mode if on sentinel
         if (currentMode !== 'index') {
           if (btnIndex) btnIndex.click();
           else showIndex(selector.value, activeDate);
@@ -436,7 +511,6 @@ window.AgriNDVI = (() => {
       });
     }
 
-    // --- Date picker ---
     const datePicker = document.getElementById('ndvi-date');
     if (datePicker) {
       datePicker.value = activeDate;
@@ -444,7 +518,6 @@ window.AgriNDVI = (() => {
       datePicker.addEventListener('change', () => setDate(datePicker.value));
     }
 
-    // --- Opacity slider ---
     const opacitySlider = document.getElementById('ndvi-opacity');
     const opacityValue  = document.getElementById('ndvi-opacity-value');
     if (opacitySlider) {
@@ -455,32 +528,29 @@ window.AgriNDVI = (() => {
       });
     }
 
-    // --- Date comparison ---
-    const compareBtn  = document.getElementById('btn-compare-dates');
-    const cDate1      = document.getElementById('compare-date1');
-    const cDate2      = document.getElementById('compare-date2');
-    const stopCmpBtn  = document.getElementById('btn-stop-compare');
-    if (compareBtn)  compareBtn.addEventListener('click',  () => { if (cDate1 && cDate2) startDateComparison(cDate1.value, cDate2.value); });
-    if (stopCmpBtn)  stopCmpBtn.addEventListener('click',  stopDateComparison);
+    const compareBtn = document.getElementById('btn-compare-dates');
+    const cDate1     = document.getElementById('compare-date1');
+    const cDate2     = document.getElementById('compare-date2');
+    const stopCmpBtn = document.getElementById('btn-stop-compare');
+    if (compareBtn) compareBtn.addEventListener('click', () => { if (cDate1 && cDate2) startDateComparison(cDate1.value, cDate2.value); });
+    if (stopCmpBtn) stopCmpBtn.addEventListener('click', stopDateComparison);
 
-    const today = new Date();
+    const today  = new Date();
     const minus30 = new Date(today.getTime() - 30 * 86400000);
     if (cDate1) cDate1.value = minus30.toISOString().slice(0, 10);
     if (cDate2) cDate2.value = today.toISOString().slice(0, 10);
 
-    // --- Timelapse ---
     const playBtn = document.getElementById('btn-timelapse-play');
     const stopBtn = document.getElementById('btn-timelapse-stop');
     if (playBtn) playBtn.addEventListener('click', startTimelapse);
     if (stopBtn) stopBtn.addEventListener('click', stopTimelapse);
 
-    // --- Initialize UI ---
     setTimeout(() => {
       showSentinel();
       renderColorLegend();
       renderLegendRanges();
       updateIndexDescription();
-      updateCapabilityNotice();
+      updateCapabilityNotice(false, null);
     }, 500);
   }
 
@@ -488,10 +558,8 @@ window.AgriNDVI = (() => {
   // PUBLIC API
   // ============================================================
   return {
-    // Init
     init: initControls,
-
-    // Existing exports (unchanged)
+    // Existing exports (preserved)
     showSentinel,
     showNDVI,
     toggle,
@@ -505,12 +573,12 @@ window.AgriNDVI = (() => {
     stopTimelapse,
     getActiveDate:  () => activeDate,
     getCurrentMode: () => currentMode,
-
     // New exports
     showIndex,
     setActiveIndex,
-    getActiveIndex: () => activeIndex,
+    getActiveIndex:              () => activeIndex,
     simulateFieldIndexForDate,
-    simulateFieldNdviForDate,  // backward compat
+    simulateFieldNdviForDate,
+    getLastGEEMeta:              () => _lastGEEMeta,
   };
 })();
