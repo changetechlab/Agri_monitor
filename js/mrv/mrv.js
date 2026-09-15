@@ -338,7 +338,7 @@ const MRVWizard = (() => {
     const center = DISTRICT_CENTERS.rudraprayag;
     _map = L.map('mrv-map', { zoomControl: true, attributionControl: false }).setView(center, 12);
 
-    const osm = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19, attribution: '© OpenStreetMap contributors © CARTO' });
+    const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, crossOrigin: true, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' });
     const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Esri' });
     osm.addTo(_map);
     _map._layers_osm = osm; _map._layers_sat = sat;

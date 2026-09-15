@@ -4,7 +4,7 @@
  * Handles asset caching, background sync, and API caching
  */
 
-const CACHE_VERSION = 'agri-monitor-v1.2.1';
+const CACHE_VERSION = 'agri-monitor-v1.2.2';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
 
