@@ -734,13 +734,10 @@ window.CRAReport = (() => {
   });
 
   // Base tile
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 18, opacity: 0.75
-  }).addTo(craReportMap);
-
-  // Terrain tile overlay (subtle)
-  L.tileLayer('https://stamen-tiles.a.ssl.fastly.net/terrain-background/{z}/{x}/{y}.png', {
-    maxZoom: 18, opacity: 0.25
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 18, opacity: 0.85
   }).addTo(craReportMap);
 
   const gpLat = ${gp.lat};
