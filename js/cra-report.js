@@ -504,8 +504,8 @@ window.CRAReport = (() => {
   <div class="hdr">
     <div class="hdr-logo">🌱</div>
     <div class="hdr-title">
-      <h1>Participatory Gram Panchayat–Level Climate Resilient Agriculture (CRA) Plan</h1>
-      <h2>Uttarakhand Climate Resilient Rainfed Farming Project (UCRRFP) — CHANGE TechLab Agri Monitor</h2>
+      <h1>Community-Based Climate Resilient Agriculture (CRA) Plan</h1>
+      <h2>Centre for Himalayan Agriculture and Nature Foundation (CHANGE) — CHANGE Agri Monitor</h2>
     </div>
     <div class="hdr-sub">
       <b>🗓️ ${today}</b>
