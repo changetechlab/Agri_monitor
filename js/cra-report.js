@@ -584,19 +584,26 @@ window.CRAReport = (() => {
     <div class="stat-cell"><span class="stat-icon">🏘️</span><span class="stat-val">${gp.village_count}</span><span class="stat-label">Villages</span></div>
     <div class="stat-cell"><span class="stat-icon">🌾</span><span class="stat-val">${gp.agri_area_ha} ha</span><span class="stat-label">Agri Area</span></div>
     <div class="stat-cell"><span class="stat-icon">🌳</span><span class="stat-val">${gp.land_use?.forest_pct || 40}%</span><span class="stat-label">Forest Cover</span></div>
-    <div class="stat-cell"><span class="stat-icon">🛰️</span><span class="stat-val">${gp.avg_ndvi}</span><span class="stat-label">Avg. NDVI</span></div>
+    <div class="stat-cell"><span class="stat-icon">🛰️</span><span class="stat-val">${gp.avg_ndvi}</span><span class="stat-label">Avg. NDVI <span style="color:#f59e0b;font-size:9px">(PLACEHOLDER)</span></span></div>
     <div class="stat-cell"><span class="stat-icon">🌧️</span><span class="stat-val">${rainfall} mm</span><span class="stat-label">Rainfall (Avg.)</span></div>
     <div class="stat-cell"><span class="stat-icon">💧</span><span class="stat-val">${gp.total_springs || 5} / ${gp.active_springs || 2}</span><span class="stat-label">Springs (Total/Active)</span></div>
     <div class="stat-cell"><span class="stat-icon">🌱</span><span class="stat-val" style="font-size:11px;word-break:break-word;">${pCrops}</span><span class="stat-label">Dominant Crops</span></div>
   </div>
 
   <!-- ══ NDVI ZONE BAR ════════════════════════════════ -->
+  <!-- ⚠️ PLACEHOLDER: Zone percentages are model estimates derived from
+       placeholder avg_ndvi values. These are NOT real Sentinel-2 zonal
+       statistics. GP-level NDVI analysis from satellite not yet available. -->
   <div class="ndvi-row">
     <div class="ndvi-cell" style="background:#dc2626">🔴 High Risk<br>${zones.high}% area</div>
     <div class="ndvi-cell" style="background:#f59e0b">🟡 Moderate<br>${zones.moderate}% area</div>
     <div class="ndvi-cell" style="background:#16a34a">🟢 Low Risk<br>${zones.low}% area</div>
     <div class="ndvi-cell" style="background:#2563eb">💧 Water Zone<br>${zones.water}% area</div>
     <div class="ndvi-cell" style="background:${overallColor}">⚠️ Overall CRA<br>${ovLevel} Priority</div>
+  </div>
+  <div style="font-size:10px;color:#f59e0b;padding:4px 8px;background:rgba(245,158,11,0.08);border-radius:4px;margin-bottom:6px">
+    ⚠️ <strong>PLACEHOLDER</strong> — ये NDVI zone percentages model-estimated हैं, real Sentinel-2 GP zonal statistics नहीं।
+    GP-level satellite analysis अभी उपलब्ध नहीं है।
   </div>
 
   <!-- ══ SLOPE, SCORES, & CONVERGENCE ══════════════════ -->

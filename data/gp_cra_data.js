@@ -28,6 +28,7 @@ window.GP_CRA_DATA = {
       agri_area_ha: 285,
       total_farmers: 312,
       avg_ndvi: 0.52,
+      ndvi_source: 'PLACEHOLDER', // avg_ndvi is a placeholder estimate — not satellite-derived
       primary_crops: ['आलू', 'राजमा', 'मंडुआ', 'गेहूं'],
       slope: 'steep',
       slope_breakup: { flat: 15, gentle: 25, moderate: 35, steep: 20, very_steep: 5 },
@@ -69,6 +70,7 @@ window.GP_CRA_DATA = {
       agri_area_ha: 198,
       total_farmers: 187,
       avg_ndvi: 0.44,
+      ndvi_source: 'PLACEHOLDER', // avg_ndvi is a placeholder estimate — not satellite-derived
       primary_crops: ['आलू', 'मंडुआ', 'गहत'],
       slope: 'very_steep',
       slope_breakup: { flat: 5, gentle: 15, moderate: 30, steep: 35, very_steep: 15 },
@@ -110,6 +112,7 @@ window.GP_CRA_DATA = {
       agri_area_ha: 231,
       total_farmers: 267,
       avg_ndvi: 0.61,
+      ndvi_source: 'PLACEHOLDER', // avg_ndvi is a placeholder estimate — not satellite-derived
       primary_crops: ['आलू', 'टमाटर', 'शिमला मिर्च', 'सेब'],
       slope: 'moderate',
       slope_breakup: { flat: 25, gentle: 40, moderate: 25, steep: 8, very_steep: 2 },
@@ -151,6 +154,7 @@ window.GP_CRA_DATA = {
       agri_area_ha: 245,
       total_farmers: 289,
       avg_ndvi: 0.49,
+      ndvi_source: 'PLACEHOLDER', // avg_ndvi is a placeholder estimate — not satellite-derived
       primary_crops: ['मंडुआ', 'झंगोरा', 'गहत', 'आलू'],
       slope: 'steep',
       slope_breakup: { flat: 15, gentle: 25, moderate: 35, steep: 20, very_steep: 5 },
@@ -196,6 +200,7 @@ window.GP_CRA_DATA = {
       agri_area_ha: 342,
       total_farmers: 398,
       avg_ndvi: 0.38,
+      ndvi_source: 'PLACEHOLDER', // avg_ndvi is a placeholder estimate — not satellite-derived
       primary_crops: ['राजमा', 'मंडुआ', 'गेहूं', 'गहत'],
       slope: 'steep',
       slope_breakup: { flat: 10, gentle: 25, moderate: 40, steep: 20, very_steep: 5 },
@@ -237,6 +242,7 @@ window.GP_CRA_DATA = {
       agri_area_ha: 276,
       total_farmers: 301,
       avg_ndvi: 0.29,
+      ndvi_source: 'PLACEHOLDER', // avg_ndvi is a placeholder estimate — not satellite-derived
       primary_crops: ['मंडुआ', 'झंगोरा', 'गहत'],
       slope: 'very_steep',
       slope_breakup: { flat: 8, gentle: 17, moderate: 35, steep: 30, very_steep: 10 },
@@ -278,6 +284,7 @@ window.GP_CRA_DATA = {
       agri_area_ha: 198,
       total_farmers: 234,
       avg_ndvi: 0.35,
+      ndvi_source: 'PLACEHOLDER', // avg_ndvi is a placeholder estimate — not satellite-derived
       primary_crops: ['मंडुआ', 'राजमा', 'गेहूं'],
       slope: 'steep',
       slope_breakup: { flat: 12, gentle: 23, moderate: 40, steep: 20, very_steep: 5 },
@@ -323,6 +330,7 @@ window.GP_CRA_DATA = {
       agri_area_ha: 418,
       total_farmers: 487,
       avg_ndvi: 0.63,
+      ndvi_source: 'PLACEHOLDER', // avg_ndvi is a placeholder estimate — not satellite-derived
       primary_crops: ['सेब', 'आलू', 'टमाटर', 'मटर', 'शिमला मिर्च'],
       slope: 'moderate',
       slope_breakup: { flat: 30, gentle: 40, moderate: 20, steep: 8, very_steep: 2 },
@@ -364,6 +372,7 @@ window.GP_CRA_DATA = {
       agri_area_ha: 319,
       total_farmers: 352,
       avg_ndvi: 0.55,
+      ndvi_source: 'PLACEHOLDER', // avg_ndvi is a placeholder estimate — not satellite-derived
       primary_crops: ['सेब', 'आलू', 'मंडुआ'],
       slope: 'moderate',
       slope_breakup: { flat: 22, gentle: 38, moderate: 28, steep: 10, very_steep: 2 },
@@ -405,6 +414,7 @@ window.GP_CRA_DATA = {
       agri_area_ha: 278,
       total_farmers: 318,
       avg_ndvi: 0.47,
+      ndvi_source: 'PLACEHOLDER', // avg_ndvi is a placeholder estimate — not satellite-derived
       primary_crops: ['मंडुआ', 'गेहूं', 'राजमा', 'आलू'],
       slope: 'steep',
       slope_breakup: { flat: 15, gentle: 25, moderate: 35, steep: 20, very_steep: 5 },
@@ -450,6 +460,7 @@ window.GP_CRA_DATA = {
       agri_area_ha: 312,
       total_farmers: 356,
       avg_ndvi: 0.41,
+      ndvi_source: 'PLACEHOLDER', // avg_ndvi is a placeholder estimate — not satellite-derived
       primary_crops: ['मंडुआ', 'गेहूं', 'गहत', 'आलू'],
       slope: 'steep',
       slope_breakup: { flat: 10, gentle: 20, moderate: 40, steep: 25, very_steep: 5 },
@@ -491,6 +502,7 @@ window.GP_CRA_DATA = {
       agri_area_ha: 267,
       total_farmers: 298,
       avg_ndvi: 0.36,
+      ndvi_source: 'PLACEHOLDER', // avg_ndvi is a placeholder estimate — not satellite-derived
       primary_crops: ['मंडुआ', 'गेहूं', 'राजमा', 'गहत'],
       slope: 'very_steep',
       slope_breakup: { flat: 5, gentle: 15, moderate: 35, steep: 35, very_steep: 10 },
@@ -532,6 +544,7 @@ window.GP_CRA_DATA = {
       agri_area_ha: 198,
       total_farmers: 221,
       avg_ndvi: 0.31,
+      ndvi_source: 'PLACEHOLDER', // avg_ndvi is a placeholder estimate — not satellite-derived
       primary_crops: ['मंडुआ', 'झंगोरा', 'गहत'],
       slope: 'very_steep',
       slope_breakup: { flat: 5, gentle: 15, moderate: 30, steep: 40, very_steep: 10 },
@@ -573,6 +586,7 @@ window.GP_CRA_DATA = {
       agri_area_ha: 234,
       total_farmers: 267,
       avg_ndvi: 0.34,
+      ndvi_source: 'PLACEHOLDER', // avg_ndvi is a placeholder estimate — not satellite-derived
       primary_crops: ['मंडुआ', 'गेहूं', 'आलू', 'राजमा'],
       slope: 'steep',
       slope_breakup: { flat: 10, gentle: 20, moderate: 35, steep: 25, very_steep: 10 },
@@ -691,6 +705,7 @@ window.GP_CRA_DATA = {
         
         // क्लाइमेट व रिमोट सेंसिंग
         avg_ndvi: avg_ndvi,
+        ndvi_source: 'PLACEHOLDER', // avg_ndvi is Math.random() — NOT satellite-derived
         avg_rainfall_mm: Math.floor(1150 + Math.random() * 300), // undefined mm Fix
         primary_crops: hillCrops.slice().sort(() => 0.5 - Math.random()).slice(0, 3), // ?????? Fix
         

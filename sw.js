@@ -4,7 +4,7 @@
  * Handles asset caching, background sync, and API caching
  */
 
-const CACHE_VERSION = 'agri-monitor-v1.2.2';
+const CACHE_VERSION = 'agri-monitor-v1.3.0'; // bumped: GEE/API cache exclusions (2026-09-19)
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
 
@@ -113,16 +113,26 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') return;
 
-  // Skip Supabase API calls (always need fresh data)
+  // ── Never cache: /api/* (GEE serverless, auth, data endpoints)
+  // GEE tile URLs expire; API responses must always be fresh.
+  if (url.pathname.startsWith('/api/')) return;
+
+  // ── Never cache: GEE tile image host
+  // earthengine.googleapis.com serves expiring signed tile URLs.
+  // Caching these would display stale/broken tiles after ~24 hours.
+  if (url.hostname === 'earthengine.googleapis.com') return;
+
+  // ── Never cache: Supabase API calls (always need fresh data)
   if (url.hostname.includes('supabase.co')) return;
 
-  // Map tiles — cache with stale-while-revalidate
+  // ── Map tiles — cache with stale-while-revalidate
+  // (OSM, EOX, OpenTopoMap — stable tile servers, not expiring URLs)
   if (TILE_HOSTS.some(host => url.hostname.includes(host))) {
     event.respondWith(tileStrategy(event.request));
     return;
   }
 
-  // Static assets — cache-first
+  // ── Static app-shell assets — cache-first (JS, CSS, HTML, fonts)
   event.respondWith(staticStrategy(event.request));
 });
 

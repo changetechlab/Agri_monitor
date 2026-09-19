@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Agri Monitor -- js/ndvi.js
  * Multi-Index Satellite Visualization
  * Supports: NDVI, NDRE, NDWI, NDBI (via SatelliteEngine)
@@ -23,6 +23,13 @@ window.AgriNDVI = (() => {
   let activeIndex  = 'ndvi';
   let isVisible    = false;
   let _lastGEEMeta = null;         // metadata from last successful GEE response
+
+  // ── Race-condition prevention ──────────────────────────────
+  // Each call to showIndex() increments this. After the async
+  // fetch completes, we check that the sequence hasn't changed
+  // before applying the result. This prevents a slow older
+  // request from overwriting a newer faster one.
+  let _fetchSequence = 0;
 
   const EOX_URL = 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg';
 
@@ -86,7 +93,17 @@ window.AgriNDVI = (() => {
 
   // ============================================================
   // SHOW INDEX -- ASYNC (core new function)
-  // Fetches real GEE tiles; falls back to EOX if unavailable
+  // Fetches real GEE tiles; shows unavailable message on failure.
+  //
+  // DATA INTEGRITY:
+  //   If GEE is unavailable, we do NOT silently show the 2020 EOX
+  //   RGB basemap in place of the requested index. The user must
+  //   never mistake RGB imagery for NDVI/NDRE/NDWI/NDBI.
+  //
+  // RACE CONDITION:
+  //   _fetchSequence is incremented at the start of each call.
+  //   After the async fetch, we verify the sequence still matches
+  //   before applying the result. Stale responses are discarded.
   // ============================================================
   async function showIndex(indexType, date) {
     const e = eng();
@@ -94,6 +111,10 @@ window.AgriNDVI = (() => {
     if (date) activeDate = date;
     if (indexType) activeIndex = indexType;
     currentMode = 'index';
+
+    // Increment sequence — any in-flight older request will detect
+    // that its sequence no longer matches and discard its result.
+    const mySeq = ++_fetchSequence;
 
     setLoadingState(true);
     updateUI();
@@ -104,35 +125,100 @@ window.AgriNDVI = (() => {
     try {
       const result = await e.fetchTileUrl(activeIndex, activeDate);
 
-      if (result && result.tileUrl) {
+      // ── Race check: discard if a newer request has already fired ──
+      if (mySeq !== _fetchSequence) {
+        return; // A newer showIndex() call is already in progress
+      }
+
+      if (result && result.tileUrl && !result.isFallback) {
+        // ── REAL GEE data ──────────────────────────────────────────
         const isReal = result.isReal === true;
         _lastGEEMeta = result;
 
         setTileLayer(result.tileUrl, {
-          attribution: isReal
-            ? '© GEE / ESA Copernicus — Sentinel-2 L2A | SCL masked'
-            : '© EOX Sentinel-2 Cloudless 2020 (RGB proxy — ' + activeIndex.toUpperCase() + ' requires band source)',
+          attribution: '© GEE / ESA Copernicus — Sentinel-2 L2A | SCL masked',
         });
 
         _updateTileSourceBadge(isReal, result);
         updateCapabilityNotice(isReal, result);
         _updateAcquiredDateDisplay(isReal, result);
 
-      } else {
-        // No imagery for this date — keep current tile, show info
-        const meta = (result && result.meta) || {};
-        _updateNoImageryState(meta.message || 'कोई imagery नहीं मिली इस दिनांक के लिए।');
+      } else if (result && !result.tileUrl && result.meta && result.meta.error === 'no_imagery') {
+        // ── No cloud-free imagery for requested date ───────────────
+        _showIndexUnavailable(
+          '📅 कोई imagery नहीं — ' +
+          (result.meta.message || 'इस दिनांक पर cloud-free Sentinel-2 उपलब्ध नहीं।') +
+          ' कृपया दूसरा दिनांक चुनें।'
+        );
         updateCapabilityNotice(false, result);
+
+      } else if (result && result.isFallback) {
+        // ── GEE unavailable — EOX fallback was returned ────────────
+        // DATA INTEGRITY: Do NOT show EOX as the requested satellite index.
+        // The 2020 EOX RGB layer is NOT NDVI/NDRE/NDWI/NDBI.
+        _showIndexUnavailable(
+          '🛰️ ' + (activeIndex ? activeIndex.toUpperCase() : 'Satellite index') + ' उपलब्ध नहीं — GEE configured नहीं है।'
+        );
+        _offerEOXExplicitly();
+        updateCapabilityNotice(false, null);
+
+      } else {
+        // ── Other failure ──────────────────────────────────────────
+        _showIndexUnavailable('🛰️ Satellite index unavailable.');
+        updateCapabilityNotice(false, null);
       }
+
     } catch (err) {
+      if (mySeq !== _fetchSequence) return; // stale request
       console.warn('[NDVI] showIndex error:', err.message);
-      // EOX fallback
-      setTileLayer(EOX_URL, { attribution: '© EOX Sentinel-2 Cloudless 2020 (fallback)' });
+      // DATA INTEGRITY: Do NOT silently load EOX as the requested index.
+      _showIndexUnavailable(
+        '🛰️ ' + (activeIndex ? activeIndex.toUpperCase() : 'Satellite index') + ' unavailable — network or GEE error.'
+      );
       updateCapabilityNotice(false, null);
     } finally {
-      setLoadingState(false);
+      if (mySeq === _fetchSequence) {
+        setLoadingState(false);
+      }
     }
   }
+
+  // ============================================================
+  // INDEX UNAVAILABLE — clear tile and show a status message
+  // Called when GEE fails, returns fallback, or no imagery found.
+  // ============================================================
+  function _showIndexUnavailable(message) {
+    const m = window.AgriMap && window.AgriMap.getMap();
+    if (tileLayer && m) { m.removeLayer(tileLayer); tileLayer = null; }
+    isVisible = false;
+    _lastGEEMeta = null;
+    _hideTileSourceBadge();
+
+    const notice = document.getElementById('index-capability-notice');
+    if (notice) {
+      notice.style.display = 'block';
+      notice.className = 'index-capability-notice notice-warn';
+      notice.innerHTML = '<strong>' + (message || '🛰️ Satellite index unavailable.') + '</strong>';
+    }
+  }
+
+  // ============================================================
+  // EOX EXPLICIT OFFER — shown separately, clearly labeled as
+  // a 2020 RGB basemap and NOT an index.
+  // ============================================================
+  function _offerEOXExplicitly() {
+    const notice = document.getElementById('index-capability-notice');
+    if (notice) {
+      notice.innerHTML +=
+        '<br><small style="opacity:0.75">📺 वैकल्पिक: ' +
+        '<button onclick="window.AgriNDVI && window.AgriNDVI.showSentinel()" ' +
+        'style="background:none;border:1px solid #666;border-radius:4px;padding:2px 8px;cursor:pointer;color:inherit">' +
+        '2020 RGB Basemap लोड करें' +
+        '</button>' +
+        ' — यह NDVI/Index नहीं है (EOX Sentinel-2 Cloudless 2020 RGB).</small>';
+    }
+  }
+
 
   // ============================================================
   // BACKWARD COMPAT: showNDVI

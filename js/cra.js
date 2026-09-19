@@ -239,7 +239,7 @@
           <div class="cra-profile-item">
             <span class="cra-pi-label">📡 NDVI औसत</span>
             <span class="cra-pi-val" style="color:${ndviColor}">${gp.avg_ndvi}</span>
-            <span class="cra-pi-sub">फसल स्वास्थ्य सूचक</span>
+            <span class="cra-pi-sub" style="color:#f59e0b;font-size:10px">⚠️ PLACEHOLDER — satellite-derived नहीं</span>
           </div>
           <div class="cra-profile-item">
             <span class="cra-pi-label">⛰️ ढलान</span>

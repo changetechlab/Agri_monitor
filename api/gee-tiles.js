@@ -1,4 +1,4 @@
-﻿/**
+/**
  * api/gee-tiles.js
  * ─────────────────────────────────────────────────────────────
  * Vercel Serverless Function — GEE Satellite Index Tile Provider
@@ -8,32 +8,36 @@
  * Query parameters:
  *   index       string  Required  ndvi | ndre | ndwi | ndbi
  *   date        string  Optional  YYYY-MM-DD  (default: today - 30 days)
- *   district    string  Optional  rudraprayag (default) | future: all Uttarakhand districts
+ *                                 Validated for calendar validity (rejects 2026-02-31 etc.)
+ *   district    string  Optional  rudraprayag (default) | chamoli | uttarkashi | tehri | pauri
  *
  * Response (success):
  *   {
- *     success:        true,
- *     index:          "ndvi",
- *     requestedDate:  "2026-08-15",
- *     acquiredDate:   "2026-08-12",     <- actual median date of imagery used
- *     windowDays:     15,               <- search window used (15 or 30 on fallback)
- *     tileUrl:        "https://earthengine.googleapis.com/v1/projects/.../tiles/{z}/{x}/{y}",
- *     imageCount:     4,
- *     cloudCoverPct:  8,
- *     expiresAt:      "2026-09-15T17:00:00Z",
- *     source:         "COPERNICUS/S2_SR_HARMONIZED",
- *     cloudMask:      "SCL_3_8_9_10_11",
- *     district:       "rudraprayag",
- *     isReal:         true
+ *     success:           true,
+ *     index:             "ndvi",
+ *     requestedDate:     "2026-08-15",      <- the date the user asked for
+ *     medianImageryDate: "2026-08-12",      <- median system:time_start across composite images
+ *     acquiredDate:      "2026-08-12",      <- deprecated alias for medianImageryDate
+ *     compositeNote:     "Median composite of N Sentinel-2 scenes within ±windowDays of requestedDate",
+ *     imageryDateRange:  { start: "...", end: "..." },  <- actual search window dates
+ *     windowDays:        15,                <- search window used (15 or 30 on fallback)
+ *     tileUrl:           "https://earthengine.googleapis.com/v1/projects/.../tiles/{z}/{x}/{y}",
+ *     imageCount:        4,                 <- number of scenes in the composite
+ *     expiresAt:         "2026-09-15T17:00:00Z",  <- GEE tile URL expiry (~24h)
+ *     source:            "COPERNICUS/S2_SR_HARMONIZED",
+ *     cloudMask:         "SCL_classes_3_8_9_10_11",
+ *     processingMethod:  "median_composite",
+ *     district:          "rudraprayag",
+ *     isReal:            true
  *   }
  *
  * Response (no imagery):
- *   { success: false, error: "no_imagery", message: "...", fallback: "eox_rgb" }
+ *   { success: false, error: "no_imagery", message: "...", requestedDate, district, index }
  *
  * Security:
  *   - GEE credentials only in Vercel env vars, never in this file
- *   - CORS restricted to app domain (allow localhost for dev)
- *   - Index and date params strictly validated
+ *   - CORS: exact origin matching only (no startsWith — prevents subdomain attacks)
+ *   - Index and date params strictly validated (including calendar overflow)
  *   - Rate limiting via Vercel Edge (plan-dependent)
  */
 
@@ -98,14 +102,22 @@ const VIS_PARAMS = {
 const ALLOWED_ORIGINS = [
   'https://agri-monitor.vercel.app',
   'https://agrimonitor.vercel.app',
-  // Add your production domain here when known
+  'https://agri-monitor-one.vercel.app',  // confirmed primary deployment (handoff.md)
+  // Add additional production domains here as exact strings
 ];
 
 function setCorsHeaders(req, res) {
   const origin = req.headers['origin'] || '';
-  // Allow localhost for development
-  const isLocalhost = origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1');
-  const isAllowed   = ALLOWED_ORIGINS.some(o => origin.startsWith(o)) || isLocalhost;
+
+  // Allow localhost for development (explicit prefix match is safe here: only localhost/127.0.0.1)
+  const isLocalhost = origin.startsWith('http://localhost:') ||
+                      origin.startsWith('http://127.0.0.1:') ||
+                      origin === 'http://localhost' ||
+                      origin === 'http://127.0.0.1';
+
+  // SECURITY: Use EXACT equality for production origins.
+  // Do NOT use startsWith() — it allows https://agri-monitor.vercel.app.evil.com to pass.
+  const isAllowed = ALLOWED_ORIGINS.some(o => origin === o) || isLocalhost;
 
   if (isAllowed) {
     res.setHeader('Access-Control-Allow-Origin', origin);
@@ -113,6 +125,7 @@ function setCorsHeaders(req, res) {
     // Direct server-to-server or same-origin — allow
     res.setHeader('Access-Control-Allow-Origin', '*');
   }
+  // If origin is set and not in allowlist — do not set ACAO header (browser will block)
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Vary', 'Origin');
@@ -136,16 +149,34 @@ function validateParams(query) {
     d.setDate(d.getDate() - 30);
     date = d.toISOString().slice(0, 10);
   } else {
-    // Validate YYYY-MM-DD format
+    // Step 1: check YYYY-MM-DD format
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       errors.push('date must be in YYYY-MM-DD format');
     } else {
-      const d = new Date(date);
-      const now = new Date();
-      const oneYearAgo = new Date();
-      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 2);
-      if (d > now) errors.push('date cannot be in the future');
-      if (d < oneYearAgo) errors.push('date cannot be more than 2 years ago');
+      // Step 2: check calendar validity
+      // new Date('2026-13-45') → NaN (invalid month/day)
+      // new Date('2026-02-31') → 2026-03-03 (JS silently overflows — must detect)
+      const d = new Date(date + 'T00:00:00Z');
+      if (isNaN(d.getTime())) {
+        // Completely invalid date (e.g. month 13, day 99)
+        errors.push('date is not a valid calendar date (e.g. month > 12 or day > days in month)');
+      } else {
+        // Round-trip check: if JS overflowed the date, the ISO string will differ
+        const reconstructed = d.toISOString().slice(0, 10);
+        if (reconstructed !== date) {
+          errors.push(
+            'date "' + date + '" is not a valid calendar date ' +
+            '(day exceeds month length; JavaScript resolved it to ' + reconstructed + ')'
+          );
+        } else {
+          // Step 3: range check
+          const now = new Date();
+          const twoYearsAgo = new Date();
+          twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+          if (d > now) errors.push('date cannot be in the future');
+          if (d < twoYearsAgo) errors.push('date cannot be more than 2 years ago');
+        }
+      }
     }
   }
 
@@ -351,20 +382,35 @@ module.exports = async function handler(req, res) {
     // Tile URL expires in ~24 hours (GEE standard)
     const expiresAt = new Date(Date.now() + 23 * 3600 * 1000).toISOString();
 
+    // Compute the imagery date range actually searched
+    const windowUsed = result.windowDays;
+    const centreMs   = new Date(date + 'T00:00:00Z').getTime();
+    const rangeStart = new Date(centreMs - windowUsed * 86400000).toISOString().slice(0, 10);
+    const rangeEnd   = new Date(centreMs + windowUsed * 86400000).toISOString().slice(0, 10);
+
     res.status(200).json({
-      success:       true,
+      success:           true,
       index,
-      requestedDate: date,
-      acquiredDate:  result.acquiredDate,
-      windowDays:    result.windowDays,
-      tileUrl:       result.tileUrl,
-      mapId:         result.mapId,
-      imageCount:    result.imageCount,
+      requestedDate:     date,
+      // medianImageryDate: the median system:time_start across all scenes in the composite.
+      // This is NOT a single scene acquisition date — it is a representative date for the
+      // multi-image median composite. The composite may span ±windowDays around requestedDate.
+      medianImageryDate: result.acquiredDate,
+      acquiredDate:      result.acquiredDate,  // deprecated alias — use medianImageryDate
+      compositeNote:     'Median composite of ' + result.imageCount + ' Sentinel-2 scene(s) ' +
+                         'within \u00b1' + windowUsed + ' days of ' + date + '. ' +
+                         'SCL cloud/shadow mask applied. Not a single-date acquisition.',
+      imageryDateRange:  { start: rangeStart, end: rangeEnd },
+      windowDays:        windowUsed,
+      tileUrl:           result.tileUrl,
+      mapId:             result.mapId,
+      imageCount:        result.imageCount,
       expiresAt,
-      source:        'COPERNICUS/S2_SR_HARMONIZED',
-      cloudMask:     'SCL_classes_3_8_9_10_11',
+      source:            'COPERNICUS/S2_SR_HARMONIZED',
+      cloudMask:         'SCL_classes_3_8_9_10_11',
+      processingMethod:  'median_composite',
       district,
-      isReal:        true,
+      isReal:            true,
     });
 
   } catch (err) {

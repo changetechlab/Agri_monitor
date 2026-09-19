@@ -470,12 +470,14 @@
             वर्तमान imagery <strong>EOX Sentinel-2 Cloudless RGB</strong> है।
             Individual Sentinel-2 spectral bands उपलब्ध नहीं हैं, इसलिए
             real pixel-level NDRE, NDWI और NDBI computation अभी enabled नहीं है।<br><br>
-            Real satellite-derived index analysis के लिए एक
-            <strong>band-capable source</strong> connect करें —
-            जैसे <strong>Google Earth Engine</strong> या
-            <strong>TiTiler</strong> (Sentinel-2 L2A COGs)।<br><br>
+            Real satellite-derived index analysis के लिए
+            <strong>Google Earth Engine</strong> credentials configure करें:<br>
+            Vercel Dashboard → Environment Variables →
+            <code>GEE_SERVICE_ACCOUNT_EMAIL</code> और <code>GEE_PRIVATE_KEY</code><br>
+            (API endpoint <code>/api/gee-tiles</code> → GEE project: <code>change-krishi-bot</code>)<br><br>
             <span style="font-size:10px;color:var(--text-muted)">
-              Configure: <code>js/config.js</code> → <code>GEE_TILE_URL</code> या <code>NDVI_TILE_URL</code>
+              ⚠️ Credentials को कभी भी <code>config.js</code> या किसी JS file में नहीं डालें —
+              केवल Vercel Environment Variables में।
             </span>
           </div>
 
