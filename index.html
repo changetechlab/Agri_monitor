@@ -140,6 +140,11 @@
           <span>CRA Plan</span>
           <span style="position:absolute;top:4px;right:5px;background:linear-gradient(135deg,#15803d,#0f766e);color:white;font-size:7px;padding:1px 4px;border-radius:6px;font-weight:700;letter-spacing:0.3px;">NEW</span>
         </button>
+        <button class="tab-btn" data-tab="agri-intel" title="Agriculture Intelligence" style="position:relative">
+          <span class="tab-icon">🌾</span>
+          <span>Krishi Intel</span>
+          <span style="position:absolute;top:4px;right:5px;background:linear-gradient(135deg,#16a34a,#22c55e);color:white;font-size:7px;padding:1px 4px;border-radius:6px;font-weight:700;letter-spacing:0.3px;">v0.3</span>
+        </button>
       </nav>
 
       <!-- Sidebar Content -->
@@ -389,6 +394,13 @@
             <span></span>
           </div>
 
+          <!-- Provenance Evidence Button -->
+          <div class="sat-provenance-btn-wrap">
+            <button class="sat-prov-btn" onclick="window.AgriSatelliteAnomaly && window.AgriSatelliteAnomaly.showProvenanceModal()">
+              🛡️ Data Provenance & Evidence Metadata
+            </button>
+          </div>
+
           <!-- Acquired Date Notice (shown when actual imagery date differs from requested) -->
           <div id="sat-acquired-date" class="sat-acquired-date" style="display:none;"></div>
 
@@ -431,7 +443,7 @@
 
           <!-- Date comparison -->
           <div class="compare-panel">
-            <h4>📊 दिनांक तुलना (Before/After)</h4>
+            <h4>📊 दिनांक तुलना (Before/After & Anomaly Detection)</h4>
             <div class="compare-dates">
               <input type="date" id="compare-date1" class="form-input" title="पहले">
               <input type="date" id="compare-date2" class="form-input" title="बाद">
@@ -441,6 +453,7 @@
               <button id="btn-compare-dates" class="btn-primary" style="flex:1;font-size:11px">तुलना करें</button>
               <button id="btn-stop-compare" class="btn-secondary" style="font-size:11px">रोकें</button>
             </div>
+            <div id="sat-anomaly-result-card" style="display:none;" class="anomaly-alert-card"></div>
           </div>
 
           <!-- Time-Lapse Player -->
@@ -871,6 +884,187 @@
 
         </div><!-- /tab-cra -->
 
+        <!-- ======================================================
+             TAB: AGRICULTURE INTELLIGENCE (PHASE 3 v0.3)
+             ====================================================== -->
+        <div id="tab-agri-intel" class="tab-panel">
+
+          <div class="tab-header">
+            <h2>🌱 Agriculture Intelligence</h2>
+            <span class="ai-status-tag tag-derived">PHASE 3 v0.3</span>
+          </div>
+
+          <!-- Data Status Guarantee Banner -->
+          <div style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;margin-bottom:12px;font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span>डेटा स्थिति (Status):</span>
+            <span class="ai-status-tag tag-real">REAL (GEE)</span>
+            <span class="ai-status-tag tag-derived">DERIVED (Sentinel-2)</span>
+            <span class="ai-status-tag tag-placeholder">PLACEHOLDER (Required)</span>
+          </div>
+
+          <!-- Phase 3.3 Ground-Truth Survey Pilot Dashboard & Action Bar -->
+          <div class="ai-section-box" style="border: 1px solid var(--green);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+              <div>
+                <h3 style="margin:0;color:var(--green)">📍 Phase 3.3 — Ground-Truth Crop Survey Pilot</h3>
+                <span style="font-size:10px;color:var(--text-muted)">Sentinel-2 ML मॉडल हेतु सत्यापित ग्राउंड-ट्रुथ सर्वेक्षण रिकॉर्ड्स</span>
+              </div>
+              <button id="btn-open-gt-survey" class="btn-primary" style="font-size:11px;padding:6px 12px;">
+                ➕ नया ग्राउंड-ट्रुथ सर्वे दर्ज करें
+              </button>
+            </div>
+
+            <!-- Dashboard Stats Grid -->
+            <div class="ai-overview-grid" style="margin-bottom:12px;">
+              <div class="ai-stat-card">
+                <div class="ai-stat-header"><span>कुल सर्वेक्षण दर्ज (Total)</span><span class="ai-status-tag tag-derived">PILOT</span></div>
+                <div id="gt-stat-total" class="ai-stat-value">0</div>
+                <div class="ai-stat-sub">ड्राफ्ट: <span id="gt-stat-draft">0</span> | प्रस्तुत: <span id="gt-stat-submitted">0</span></div>
+              </div>
+              <div class="ai-stat-card">
+                <div class="ai-stat-header"><span>सत्यापित ग्राउंड-ट्रुथ (Verified)</span><span class="ai-status-tag tag-real">VERIFIED</span></div>
+                <div id="gt-stat-verified" class="ai-stat-value" style="color:var(--green);">0</div>
+                <div class="ai-stat-sub">अस्वीकृत (Rejected): <span id="gt-stat-rejected">0</span></div>
+              </div>
+              <div class="ai-stat-card">
+                <div class="ai-stat-header"><span>पायलट फसलें (Mandua & Wheat)</span><span class="ai-status-tag tag-real">TARGET</span></div>
+                <div class="ai-stat-value">
+                  🌾 <span id="gt-stat-mandua">0</span> | 🌾 <span id="gt-stat-wheat">0</span>
+                </div>
+                <div class="ai-stat-sub">कुल सत्यापित क्षेत्रफल: <strong id="gt-stat-verified-area">0.00 Ha</strong></div>
+              </div>
+            </div>
+
+            <!-- Survey Records Table -->
+            <div class="ai-table-wrap">
+              <table class="ai-table">
+                <thead>
+                  <tr>
+                    <th>स्थान (Geography)</th>
+                    <th>फसल (Crop)</th>
+                    <th>क्षेत्रफल (Area)</th>
+                    <th>सर्वेक्षक (Collector)</th>
+                    <th>सत्यापन स्थिति (Status)</th>
+                    <th>कार्रवाई (Action)</th>
+                  </tr>
+                </thead>
+                <tbody id="gt-survey-table-body">
+                  <tr>
+                    <td colspan="6" style="text-align:center;padding:16px;color:var(--text-muted);">
+                      कोई ग्राउंड-ट्रुथ सर्वे दर्ज नहीं है। <strong>"➕ नया सर्वे दर्ज करें"</strong> पर क्लिक करें।
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Verified Geography & Crop Filter Bar -->
+          <div class="ai-filter-bar">
+            <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:8px">📍 भूगोल एवं फसल फ़िल्टर (Geography & Crop Filters)</div>
+            <div class="ai-filter-grid">
+              <div>
+                <label class="form-label" style="font-size:9.5px">जिला (District)</label>
+                <select id="ai-filter-district" class="form-input" style="font-size:10.5px;padding:4px 6px;">
+                  <option value="all">सभी जिले (All)</option>
+                  <option value="Rudra Prayag" selected>रुद्रप्रयाग (Rudraprayag)</option>
+                  <option value="Chamoli">चमोली (Chamoli)</option>
+                  <option value="Tehri Garhwal">टिहरी गढ़वाल (Tehri)</option>
+                  <option value="Uttar Kashi">उत्तरकाशी (Uttarkashi)</option>
+                  <option value="Pauri Garhwal">पौड़ी गढ़वाल (Pauri)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label" style="font-size:9.5px">ब्लॉक (Block)</label>
+                <select id="ai-filter-block" class="form-input" style="font-size:10.5px;padding:4px 6px;">
+                  <option value="all">सभी ब्लॉक (All)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label" style="font-size:9.5px">ग्राम पंचायत (GP)</label>
+                <select id="ai-filter-gp" class="form-input" style="font-size:10.5px;padding:4px 6px;">
+                  <option value="all">सभी GP (All)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label" style="font-size:9.5px">गांव (Village)</label>
+                <select id="ai-filter-village" class="form-input" style="font-size:10.5px;padding:4px 6px;">
+                  <option value="all">सभी गांव (All)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label" style="font-size:9.5px">फसल (Crop)</label>
+                <select id="ai-filter-crop" class="form-input" style="font-size:10.5px;padding:4px 6px;">
+                  <option value="all">सभी फसलें (All)</option>
+                  <option value="mandua">मंडुआ (Finger Millet)</option>
+                  <option value="jhangora">झंगोरा (Barnyard Millet)</option>
+                  <option value="paddy">धान (Paddy)</option>
+                  <option value="wheat">गेहूं (Wheat)</option>
+                  <option value="rajma">राजमा (Pulses)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label" style="font-size:9.5px">मौसम (Season)</label>
+                <select id="ai-filter-season" class="form-input" style="font-size:10.5px;padding:4px 6px;">
+                  <option value="all">सभी मौसम (All)</option>
+                  <option value="kharif">खरीफ (Kharif)</option>
+                  <option value="rabi">रबी (Rabi)</option>
+                  <option value="perennial">सदाबहार (Perennial)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 1: Crop Overview Grid -->
+          <div id="ai-overview-cards" class="ai-overview-grid"></div>
+
+          <!-- Section 2: Crop Architecture Table -->
+          <div class="ai-section-box">
+            <h3>🌾 फसल डेटा मॉडल एवं स्थिति (Crop Architecture View)</h3>
+            <div class="ai-table-wrap">
+              <table class="ai-table">
+                <thead>
+                  <tr>
+                    <th>फसल का नाम (Crop)</th>
+                    <th>श्रेणी (Category)</th>
+                    <th>मौसम (Season)</th>
+                    <th>डेटा स्थिति (Status)</th>
+                    <th>स्रोत एवं विवरण (Provenance)</th>
+                  </tr>
+                </thead>
+                <tbody id="ai-crop-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Section 3: Crop Condition (Real Sentinel-2 / GEE NDVI Pipeline) -->
+          <div class="ai-section-box">
+            <h3>📡 फसल स्थिति अवलोकन (Real Satellite Condition Engine)</h3>
+            <div id="ai-crop-condition-content"></div>
+          </div>
+
+          <!-- Section 4: Transparent Agriculture Risk Signals -->
+          <div class="ai-section-box">
+            <h3>📊 कृषि जोखिम संकेत (Transparent Risk Signals)</h3>
+            <p style="font-size:10.5px;color:var(--text-muted);margin:0 0 10px;">
+              पारदर्शी अवलोकन संकेत — किसी भी अस्पष्ट "हाई रिस्क" दावों के बिना उपग्रह अवलोकनों पर आधारित।
+            </p>
+            <div id="ai-signals-list"></div>
+          </div>
+
+          <!-- Section 5: Evidence-Based Agricultural Advisory -->
+          <div class="ai-section-box">
+            <h3>💡 साक्ष्य-आधारित निर्णय सहायता सलाह (Agricultural Advisory Layer)</h3>
+            <div id="ai-advisory-list"></div>
+          </div>
+
+        </div><!-- /tab-agri-intel -->
+
       </div><!-- /sidebar-inner -->
 
       <div class="sidebar-footer" style="flex-shrink: 0; padding: 12px; background: var(--bg-tertiary); border-top: 1px solid var(--border); font-size: 10px; color: var(--text-muted); text-align: center; line-height: 1.4;">
@@ -1225,6 +1419,102 @@
   </div>
 </div>
 
+<!-- ============================================================
+     GROUND-TRUTH CROP SURVEY MODAL (PHASE 3.3)
+     ============================================================ -->
+<div id="gt-survey-modal" class="modal-overlay hidden" data-modal="gt-survey-modal">
+  <div class="modal-box sat-modal-box" style="max-width:560px;">
+    <div class="modal-header">
+      <h3>📍 नया ग्राउंड-ट्रुथ खेत सर्वेक्षण दर्ज करें</h3>
+      <button class="modal-close-btn" onclick="document.getElementById('gt-survey-modal').classList.add('hidden')">✕</button>
+    </div>
+    <form id="gt-survey-form">
+      <div class="modal-body" style="max-height:70vh;overflow-y:auto;padding-right:6px;">
+
+        <!-- Geography Cascade -->
+        <div style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:8px">1. प्रशासनिक भूगोल (Administrative Geography) *</div>
+          <div class="detail-grid">
+            <div class="form-group">
+              <label class="form-label" style="font-size:9.5px">जिला (District) *</label>
+              <select id="gt-district" class="form-input" style="font-size:10.5px" required></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size:9.5px">ब्लॉक (Block) *</label>
+              <select id="gt-block" class="form-input" style="font-size:10.5px" disabled required></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size:9.5px">ग्राम पंचायत (GP) *</label>
+              <select id="gt-gp" class="form-input" style="font-size:10.5px" disabled required></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size:9.5px">गांव (Village) *</label>
+              <select id="gt-village" class="form-input" style="font-size:10.5px" disabled required></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Field Geometry & Area -->
+        <div style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:var(--teal);margin-bottom:6px">2. खेत सीमा पोलिगोन (Field Geometry & Polygon Area) *</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-bottom:8px">
+            मानचित्र पर <strong>Leaflet Draw Tool</strong> का प्रयोग करके खेत की सीमा खींचें।
+          </div>
+          <input type="text" id="gt-area-display" class="form-input" readonly value="मानचित्र पर खेत का पोलिगोन खींचें" style="font-weight:700;color:var(--green);">
+        </div>
+
+        <!-- Crop Attributes -->
+        <div style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text-primary);margin-bottom:8px">3. फसल विवरण (Crop Details) *</div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label class="form-label" style="font-size:9.5px">फसल (Crop Name) *</label>
+            <select id="gt-crop-select" class="form-input" style="font-size:10.5px" required>
+              <option value="">-- फसल चुनें --</option>
+              <option value="mandua">मंडुआ (Mandua / Finger Millet)</option>
+              <option value="wheat">गेहूं (Wheat)</option>
+              <option value="jhangora">झंगोरा (Jhangora / Barnyard Millet)</option>
+              <option value="paddy">धान (Paddy)</option>
+              <option value="rajma">राजमा (Rajma / Pulses)</option>
+              <option value="potato">आलू (Potato)</option>
+              <option value="mustard">सरसों (Mustard)</option>
+              <option value="apple">सेब / उद्यानिकी (Apple / Horticulture)</option>
+            </select>
+          </div>
+
+          <div class="detail-grid">
+            <div class="form-group">
+              <label class="form-label" style="font-size:9.5px">बुवाई तिथि (Sowing Date)</label>
+              <input type="date" id="gt-sowing-date" class="form-input" style="font-size:10.5px">
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size:9.5px">सर्वेक्षण तिथि (Survey Date)</label>
+              <input type="date" id="gt-survey-date" class="form-input" style="font-size:10.5px">
+            </div>
+          </div>
+        </div>
+
+        <!-- Collector & Photo Evidence -->
+        <div style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:10px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text-primary);margin-bottom:8px">4. सर्वेक्षक एवं साक्ष्य (Collector & Evidence)</div>
+          <div class="form-group" style="margin-bottom:8px;">
+            <label class="form-label" style="font-size:9.5px">सर्वेक्षक का नाम (Collector Name) *</label>
+            <input type="text" id="gt-collector-name" class="form-input" placeholder="उदा: राम सिंह (CLF समन्वयक)" style="font-size:10.5px" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-size:9.5px">फोटो साक्ष्य URL (Photo Evidence Link)</label>
+            <input type="url" id="gt-photo-url" class="form-input" placeholder="https://..." style="font-size:10.5px">
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="document.getElementById('gt-survey-modal').classList.add('hidden')">रद्द</button>
+        <button type="submit" class="btn-primary">✅ ग्राउंड-ट्रुथ सर्वे जमा करें (Submit)</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 
 <!-- ============================================================
      SCRIPTS — CDN Libraries
@@ -1261,6 +1551,9 @@
 <script src="js/himalayan-cra.js?v=1.2.2" defer></script>
 <script src="js/cra-report.js?v=1.2.2" defer></script>
 <script src="js/satellite-engine.js?v=1.2.2" defer></script>
+<script src="js/modules/satellite-anomaly.js?v=1.2.2" defer></script>
+<script src="js/modules/agri-intelligence.js?v=1.2.2" defer></script>
+<script src="js/modules/crop-survey.js?v=1.2.2" defer></script>
 <script src="js/app.js?v=1.2.2" defer></script>
 
 </body>

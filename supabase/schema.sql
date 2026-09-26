@@ -252,3 +252,44 @@ INSERT INTO clf_clusters (name, name_hindi, type, block, district, contact_name,
   ('Alaknanda SHG Federation', 'अलकनंदा SHG', 'SHG', 'Jakholi', 'rudraprayag', 'रमा नेगी', 32, 30.3267, 79.0978),
   ('Kedar Kisaan FPO', 'केदार किसान FPO', 'FPO', 'Augustyamuni', 'rudraprayag', 'बीरेंद्र सिंह', 68, 30.3820, 79.0567)
 ON CONFLICT DO NOTHING;
+
+-- ============================================================
+-- PHASE 3.3 TABLE: ground_truth_surveys
+-- Ground-Truth Crop Observations for Sentinel-2 ML Classification
+-- ============================================================
+CREATE TABLE IF NOT EXISTS ground_truth_surveys (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  field_id TEXT,
+  district_id TEXT,
+  district_name TEXT NOT NULL,
+  block_id TEXT,
+  block_name TEXT NOT NULL,
+  gp_id TEXT,
+  gp_name TEXT NOT NULL,
+  village_id TEXT,
+  village_name TEXT NOT NULL,
+  crop_name TEXT NOT NULL,
+  crop_category TEXT NOT NULL,
+  season TEXT NOT NULL,
+  sowing_date DATE,
+  expected_harvest_date DATE,
+  irrigation_type TEXT,
+  geom GEOGRAPHY(POLYGON, 4326),
+  geojson JSONB NOT NULL,
+  area_ha DOUBLE PRECISION NOT NULL,
+  survey_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  collector_id TEXT,
+  collector_name TEXT NOT NULL,
+  photo_evidence TEXT,
+  verification_status TEXT DEFAULT 'SUBMITTED' CHECK (verification_status IN ('DRAFT', 'SUBMITTED', 'VERIFIED', 'REJECTED')),
+  verification_notes TEXT,
+  source TEXT DEFAULT 'Agri Monitor Ground Truth Survey Module',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS gt_surveys_geom_idx ON ground_truth_surveys USING GIST (geom);
+ALTER TABLE ground_truth_surveys ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "gt_surveys_public_read" ON ground_truth_surveys FOR SELECT USING (true);
+CREATE POLICY "gt_surveys_authenticated_insert" ON ground_truth_surveys FOR INSERT WITH CHECK (true);
+

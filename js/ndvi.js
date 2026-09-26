@@ -455,6 +455,32 @@ window.AgriNDVI = (() => {
     if (label) label.innerHTML =
       '<span style="color:#22c55e">📅 ' + formatDate(date1) + '</span> &rarr; ' +
       '<span style="color:#f59e0b">📅 ' + formatDate(date2) + '</span>';
+
+    // Trigger Anomaly Detection Analysis
+    if (window.AgriSatelliteAnomaly) {
+      const res = window.AgriSatelliteAnomaly.analyzeAnomaly(date1, date2, activeIndex);
+      const resCard = document.getElementById('sat-anomaly-result-card');
+      if (resCard) {
+        resCard.style.display = 'block';
+        resCard.innerHTML = `
+          <div class="anomaly-alert-header">
+            <span class="anomaly-alert-title">🚨 Crop Stress & Anomaly Signal</span>
+            <span class="anomaly-risk-tag risk-${res.overallRisk.toLowerCase()}">${res.overallRisk} RISK</span>
+          </div>
+          <div style="font-size:10.5px;color:var(--text-secondary);margin-bottom:6px;">
+            औसत सूचकांक परिवर्तन (Δ${activeIndex.toUpperCase()}): <strong>${res.avgDelta > 0 ? '+' : ''}${res.avgDelta}</strong><br>
+            गंभीर तनाव क्षेत्र: <strong style="color:var(--red);">${res.severeCount}</strong> | मध्यम: <strong>${res.moderateCount}</strong>
+          </div>
+          <div style="margin-top:6px;border-top:1px dashed var(--border);padding-top:6px;">
+            ${res.recommendations.map(r => `
+              <div style="font-size:10px;margin-bottom:4px;">
+                <strong>${r.title}:</strong> ${r.text}
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+    }
   }
 
   function stopDateComparison() {
@@ -462,6 +488,8 @@ window.AgriNDVI = (() => {
     if (compareLayer && m) { m.removeLayer(compareLayer); compareLayer = null; }
     const label = document.getElementById('compare-label');
     if (label) label.innerHTML = '';
+    const resCard = document.getElementById('sat-anomaly-result-card');
+    if (resCard) { resCard.style.display = 'none'; resCard.innerHTML = ''; }
   }
 
   // ============================================================

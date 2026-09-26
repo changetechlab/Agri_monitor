@@ -173,6 +173,14 @@ window.AgriApp = (() => {
       try { window.CRA.initCRATab(); } catch(e) { console.warn('[App] CRA init failed:', e); }
       try { if (window.HimalayanCRA) window.HimalayanCRA.init(); } catch(e) { console.warn('[App] HimalayanCRA init failed:', e); }
     }
+    // Agriculture Intelligence Phase 3
+    if (window.AgriIntelligence) {
+      try { window.AgriIntelligence.init(); } catch(e) { console.warn('[App] AgriIntelligence init failed:', e); }
+    }
+    // Ground-Truth Crop Survey Phase 3.3
+    if (window.AgriCropSurvey) {
+      try { window.AgriCropSurvey.init(); } catch(e) { console.warn('[App] AgriCropSurvey init failed:', e); }
+    }
     renderDashboardStats();
   }
 
@@ -254,6 +262,8 @@ window.AgriApp = (() => {
     if (tabId === 'satellite') {
       AgriNDVI.renderColorLegend();
       AgriCharts.renderCropDistribution(state.fields);
+    } else if (tabId === 'agri-intel' && window.AgriIntelligence) {
+      window.AgriIntelligence.renderUI();
     }
     // Fire event for CRA tab (mini-map invalidation)
     document.dispatchEvent(new CustomEvent('tabChanged', { detail: { tab: tabId } }));

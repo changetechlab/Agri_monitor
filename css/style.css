@@ -2155,3 +2155,419 @@ img { max-width: 100%; }
 #cra-scores-section:not([style*="display: none"]) + #cra-map-section {
   display: block;
 }
+
+/* ============================================================
+   SATELLITE PROVENANCE & ANOMALY DETECTION (PHASE 2)
+   ============================================================ */
+.sat-provenance-btn-wrap {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sat-prov-btn {
+  background: rgba(20, 184, 166, 0.12);
+  color: var(--teal);
+  border: 1px solid rgba(20, 184, 166, 0.3);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.sat-prov-btn:hover {
+  background: rgba(20, 184, 166, 0.25);
+  border-color: var(--teal);
+}
+
+.sat-modal-box {
+  max-width: 540px;
+  width: 90%;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  padding: 20px;
+}
+
+.sat-provenance-badge {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.sat-provenance-badge.real {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--green);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.sat-provenance-badge.sim {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--yellow);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.provenance-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.prov-item {
+  background: var(--bg-tertiary);
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.prov-item span {
+  display: block;
+  font-size: 9.5px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.prov-item strong {
+  font-size: 11px;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.prov-data-flow {
+  background: rgba(13, 17, 23, 0.6);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 14px;
+}
+
+.prov-data-flow h4 {
+  font-size: 11px;
+  margin: 0 0 6px 0;
+  color: var(--text-secondary);
+}
+
+.data-chain-steps {
+  font-size: 10px;
+  color: var(--teal);
+  font-family: var(--font-en);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.prov-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.anomaly-alert-card {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(13, 17, 23, 0.8) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.anomaly-alert-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.anomaly-alert-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fca5a5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.anomaly-risk-tag {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 800;
+}
+
+.risk-high { background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid #ef4444; }
+.risk-medium { background: rgba(245,158,11,0.2); color: #f59e0b; border: 1px solid #f59e0b; }
+.risk-low { background: rgba(34,197,94,0.2); color: #22c55e; border: 1px solid #22c55e; }
+
+/* ============================================================
+   PHASE 3: AGRICULTURE INTELLIGENCE STYLES
+   ============================================================ */
+.ai-status-tag {
+  font-size: 8.5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  display: inline-block;
+}
+
+.tag-real { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.4); }
+.tag-derived { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+.tag-demo { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4); }
+.tag-placeholder { background: rgba(156, 163, 175, 0.15); color: #9ca3af; border: 1px solid rgba(156, 163, 175, 0.3); }
+
+.ai-filter-bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.ai-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 767px) {
+  .ai-filter-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.ai-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 767px) {
+  .ai-overview-grid { grid-template-columns: 1fr; }
+}
+
+.ai-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.ai-stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.ai-stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.ai-stat-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.ai-section-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.ai-section-box h3 {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-table-wrap {
+  overflow-x: auto;
+}
+
+.ai-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.ai-table th {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.ai-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.crop-cat-badge {
+  font-size: 9px;
+  background: rgba(20, 184, 166, 0.15);
+  color: var(--teal);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.condition-banner {
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.condition-banner.real-banner {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.condition-banner.derived-banner {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.banner-title {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.banner-date {
+  font-size: 10px;
+  color: var(--teal);
+}
+
+.banner-body {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.condition-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.c-metric-item {
+  background: var(--bg-tertiary);
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.c-metric-item span {
+  display: block;
+  font-size: 9.5px;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+
+.c-metric-item strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.signal-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.signal-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.signal-name {
+  font-size: 11.5px;
+  color: var(--text-primary);
+}
+
+.signal-card-body {
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.sig-row span {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.advisory-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.advisory-status-bar {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--teal);
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.adv-section {
+  margin-bottom: 6px;
+}
+
+.adv-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.adv-section p {
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.adv-meta {
+  font-size: 9.5px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+
